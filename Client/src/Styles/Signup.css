@@ -1,0 +1,128 @@
+.signup-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100vw;
+    background-color: rgb(233, 233, 233);
+
+    & .signup-main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-shadow: 0 5px 10px -3px rgb(63, 63, 63);
+        border-radius: 20px;
+        height: 80vh;
+        width: 30vw;
+        background-color: white;
+
+        & .signup-header {
+            width: 100%;
+            text-align: center;
+            & p {
+                font-weight: bold;
+                font-size: 1.7rem;
+                color: #3C3C3C;
+            }
+        }
+        & .passBar {
+            padding: 2px;
+            display: flex;
+            align-self: flex-start;
+            position: relative;
+            left: 7.5%;
+            border-radius: 10px;
+        }
+        & .form {
+            height: 100%;
+            width: 100%;
+            & form {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                height: 100%;
+                width: 100%;
+                gap: 20px;
+                & div {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    & input {
+                        border: none;
+                        background-color: lightgrey;
+                        padding: 10px;
+                        border-radius: 10px;
+                        width: 23vw;
+                        outline: none;
+                        font-size: medium;
+                    }
+                }
+                & .password, .confPassword {
+                    position: relative;
+                    & input {
+                        padding-right: 12%;
+                    }
+                    & .showpass1, .showpass2 {
+                        position: absolute;
+                        right: 10%;
+                    }
+                }
+                & .sex {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    font-size: 1.1rem;
+                    & select {
+                        padding: 2%;
+                        border-radius: 10px;
+                        border: none;
+                        background-color: lightgrey;
+                        cursor: pointer;
+                    }
+                }
+                & button {
+                    width: 100px;
+                    height: 40px;
+                    border-radius: 10px;
+                    border: none;
+                    outline: white;
+                    cursor: pointer;
+                    font-size: 500;
+                    font-weight: bold;
+                    color: #3C3C3C;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                    background-color: rgb(7, 141, 252);
+                    color: white;
+                    &:hover {
+                        opacity: 0.6;
+                    }
+                }
+            }
+        }
+        & .alreadyHaveAcc {
+            & a {
+                text-decoration: none;
+                color: rgb(7, 141, 252);
+                font-weight: bold;
+            }
+        }
+    }
+    & .signup-anime {
+        height: 80vh;
+        width: 45vw;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        right: 0;
+    }
+    
+}

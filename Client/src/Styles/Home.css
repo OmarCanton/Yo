@@ -1,0 +1,298 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+* {
+    transition: all 0.15s;
+}
+
+.home-wrapper {
+    min-height: 100vh;
+    background-color: rgb(233, 233, 233);
+    
+    & .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px;
+        height: 12vh;
+        & .appName {
+            font-weight: bold;
+            font-size: 2rem;
+            font-family: 'Lobster Two';
+        }
+        & .searchMsgBar {
+            width: 25vw;
+            position: relative;
+            & input {
+                width: 100%;
+                border: none;
+                outline: none;
+                padding: 10px;
+                font-size: medium;
+                border-radius: 20px;
+                padding-right: 50px;
+            }
+            & .searchIcon {
+                position: absolute;
+                top: 25%;
+                right: 15px;
+            }
+        }
+        & .right {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            position: relative;
+            right: 10px;
+            & > div {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                cursor: pointer;
+                & p {
+                    font-size: 0.8rem;
+                }
+                &:hover {
+                    opacity: 0.3
+                }
+            }
+            & .logout {
+                & .logoutIcon{
+                    font-size: 1.7rem;
+                }
+            }
+        }
+    }
+    & .main {
+        display: flex;
+        width: 100%;
+        height: 88vh;
+        & .chats {
+            background-color: rgb(233, 233, 233);
+            width: 25%;
+            height: 100%;
+            position: relative;
+            & span {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                gap: 10px;
+                padding: 10px;
+                position: relative;
+                & p {
+                    font-weight: bold;
+                    font-size: 1.3rem;
+                }
+                & input {
+                    border: none;
+                    outline: none;
+                    padding: 10px;
+                    width: 100%;
+                    border-radius: 5px;
+                    font-size: medium;
+                    padding-right: 45px;
+                }
+                & .searchIcon2 {
+                    position: absolute;
+                    top: 58.5%;
+                    right: 20px;
+                }
+            }
+            & .friends {
+                display: flex;
+                flex-direction: column;
+                padding: 10px;
+                gap: 10px;
+                & .chat {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    gap: 10px;
+                    padding: 15px;
+                    background-color: white;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    & img {
+                        background-color: grey;
+                        height: 40px;
+                        width: 40px;
+                        clip-path: circle();
+                        object-fit: cover;
+                    }
+                }
+                & .loading, .noFriend {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+            }
+            & .collapseExpand {
+                background-color: rgb(165, 165, 165);
+                color: white;
+                border-radius: 50%;
+                padding: 3px;
+                width: fit-content;
+                position: absolute;
+                top: 13px;
+                right: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+        & .chatArea {
+            width: 75%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: rgb(233, 233, 233);
+            & .chatHead {
+                display: flex;
+                border-top-left-radius: 20px;
+                height: 12vh;
+                padding: 5px;
+                background-color: white;
+                & .profile {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-start;
+                    border-radius: 20px;
+                    background-color: rgb(233, 233, 233);
+                    width: 100%;
+                    gap: 10px;
+                    padding: 15px;
+                    & .receipientImage {
+                        display: flex;
+                        & img {    
+                            background-color: grey;
+                            clip-path: circle();
+                            height: 40px;
+                            width: 40px;
+                        }
+                    }
+                    & p {
+                        font-weight: 600;
+                        font-size: 1.2rem;
+                    }
+                }
+            }
+            & .messageArea {
+                display: flex;
+                height: 64vh;
+                padding: 20px;
+                background-color: white;
+                border-bottom-left-radius: 20px;
+                flex-direction: column;
+                & > * {
+                    & > * {
+                        width: 30%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-start;
+                        padding: 20px;
+                    }
+                }
+                & .animationCont {
+                    height: 60vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    & .animation {
+                        width: 55%;
+                    }
+                    & h3 {
+                        width: 100%;
+                        display: flex;
+                        justify-content: center;
+                        position: relative;
+                        bottom: 40px;
+                    }
+                }
+            }
+            & .inputs {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 12vh;
+                background-color: rgb(233, 233, 233);
+                padding: 10px;
+                gap: 30px;
+                & .right {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 15px;
+                    & > div {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        &:hover {
+                            opacity: 0.7;
+                            cursor: pointer;
+                        }
+                    }
+                    & .audioRecorder {
+                        background-color: rgb(7, 141, 252);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                        padding: 7px;
+                    }
+                }
+                & .textInput {
+                    width: 50%;
+                    position: relative;
+                    & .left {
+                        display: flex;
+                        position: absolute;
+                        align-items: center;
+                        justify-content: center;
+                        top: 18%;
+                        left: 10px;
+                        & > div {
+                            display: flex;
+                            clip-path: circle();
+                            padding: 7px;
+                            cursor: pointer;
+                            &:hover {
+                                opacity: 0.7;
+                            }
+                        }
+                    }
+                    & input {
+                        border: none;
+                        outline: rgb(7, 141, 252);
+                        padding: 15px;
+                        width: 100%;
+                        font-size: medium;
+                        border-radius: 20px;
+                        padding-left: 100px;
+                        padding-right: 60px;
+                    }
+                    & .senderIcon {
+                        position: absolute;
+                        top: 18%;
+                        right: 10px;
+                        background-color: rgb(7, 141, 252);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 50%;
+                        padding: 5px;
+                        cursor: pointer;
+                        &:hover {
+                            background-color: green;
+                        }
+                        &:active {
+                            scale: 0.8;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

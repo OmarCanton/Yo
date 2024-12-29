@@ -1,0 +1,82 @@
+.verify-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgb(233, 233, 233);
+    & .main {
+        background-color: white;
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        gap: 20px;
+        box-shadow: 0 5px 15px -3px rgb(151, 151, 151);
+        & .header-verify {
+            width: 100%;
+            text-align: center;
+            font-weight: bold;
+            font-size: 2rem;
+            padding: 5px;
+            transform: translateY(30px);
+        }
+        & .form-verify {
+            width: 100%;
+            height: 100%;
+            & form {
+                width: 100%;
+                height: fit-content;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 50px;
+                padding-left: 35px;
+                padding-right: 35px;
+                gap: 15px;
+                & input {
+                    padding: 5px;
+                    width: 100%;
+                    font-size: medium;
+                    background-color: rgb(235, 233, 233);
+                    border: 1px solid lightgrey;
+                    outline: none;
+                    padding: 10px;
+                }
+                & button {
+                    height: 40px;
+                    width: 90px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 5px;
+                }
+            }
+            & .timer {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-direction: column;
+                gap: 5px;
+                position: relative;
+                bottom: 20px;
+                padding: 10px;
+                & p {
+                    font-size: large;
+                }
+                & span {
+                    font-weight: bold;
+                    font-size: 1.5rem;
+                    color: grey;
+                }
+                & button {
+                    height: 40px;
+                    width: 90px;
+                }
+            }
+        }
+    }
+}
