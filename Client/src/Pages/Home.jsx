@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useState } from 'react'
 import '../Styles/Home.css'
 import { useNavigate } from 'react-router-dom'
 import { 
@@ -18,28 +18,15 @@ import { UserDetailsContext } from '../Contexts/userDetailsContext'
 import axios from 'axios'
 import { CircularProgress } from '@mui/material'
 import { toast } from 'react-hot-toast'
-import {
-    fetchFriends,
-    acptdFriends,
-    stat
-} from '../Redux/Slice/fetchFriends'
-import { useDispatch, useSelector } from 'react-redux'
 import Lottie from 'lottie-react'
 import StartChat from '../Effects/StartChat.json'
 
 export default function Home() {
     const navigate = useNavigate()
-    const { setIsLoggedIn, userId } = useContext(UserDetailsContext)
+    const { setIsLoggedIn } = useContext(UserDetailsContext)
     const [loggingOut, setLoggingOut] = useState(false)
-    const dispatch = useDispatch()
-    const friends = useSelector(acptdFriends)
-    const status = useSelector(stat)
 
-    useEffect(() => {
-        if(userId){
-            dispatch(fetchFriends(userId))
-        }
-    }, [dispatch, userId])
+    
 
     const handleLogout = async () => {
         setLoggingOut(true)
@@ -109,24 +96,7 @@ export default function Home() {
                         <input type="text" placeholder='Search Chat' />
                         <SearchRounded className='searchIcon2' />
                     </span>
-                    <div className="friends">
-                        {status === 'loading' && 
-                            <div className="loading">
-                                <CircularProgress />
-                            </div>
-                        }
-                        {(status === 'succeeded' && friends.length > 0) && friends.map((friend, index) => {
-                            return (
-                                <div className="chat" key={index}>
-                                    <img src={friend.profileImage} alt={friend.username} />
-                                    <p>{friend.username}</p>
-                                </div>
-                            )
-                        })}
-                        {((status === 'failed' || status === 'succeeded') && friends.length <= 0) && 
-                            <div className='noFriend'>No Chat yet<br/></div>
-                        }
-                    </div>
+                    <div className="friends"></div>
                     <pre className="collapseExpand"><ArrowBackIosNew style={{fontSize: 'large', cursor: 'pointer'}}/></pre>
                 </div>
                 <div className="chatArea">

@@ -1,0 +1,34 @@
+.friends-wrapper {
+    min-height: 100vh;
+    background-color: rgb(233, 233, 233);
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 10px;
+    & .header {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        gap: 10px;
+        position: relative;
+        & span {
+            font-weight: bold;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        & input {
+            border: none;
+            background-color: rgb(233, 233, 233);
+            padding: 15px;
+            width: 25vw;
+            font-size: medium;
+            border-radius: 25px;
+            outline: none;
+            position: absolute;
+            left: 35%;
+        }
+    }
+}

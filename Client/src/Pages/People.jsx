@@ -1,6 +1,6 @@
 import { useEffect, useContext, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import '../Styles/FriendsPage.css'
+import '../Styles/People.css'
 import axios from 'axios'
 import { UserDetailsContext } from '../Contexts/userDetailsContext'
 import {
@@ -9,6 +9,7 @@ import {
 } from '@mui/icons-material'
 import { CircularProgress } from '@mui/material'
 import { toast } from 'react-hot-toast'
+import { motion } from 'framer-motion'
 
 
 
@@ -287,18 +288,32 @@ export default function People() {
     <div className="friendspage-wrapper">
         <div className="header">
             <span>
-                <ArrowBackIosNewRounded style={{fontSize: '2rem', cursor: 'pointer'}} onClick={() => navigate(-1)}/>
-                <p>Find Friends</p>
+                <ArrowBackIosNewRounded style={{fontSize: '1.9rem', cursor: 'pointer'}} onClick={() => navigate(-1)}/>
+                <p>People</p>
             </span>
-            <input type="text" placeholder="Search Friends..." />
+            <input type="text" placeholder="Find People..." />
         </div>
         <div className="main">
             {friendReqs.length > 0 && 
                 <div className="requests">
-                    <h3>Friend Requests</h3>
+                    <motion.h3
+                        initial={{y: '-10%', opacity: 0}}
+                        animate={{y: 0, opacity: 1}}
+                        exit={{y: '-10%', opacity: 0}}
+                        transition={{duration: 0.15}}
+                    >
+                        Friend Requests
+                    </motion.h3>
                     {friendReqs.map((req, index) => {
                         return (
-                            <div className="req" key={index}>
+                            <motion.div 
+                                className="req" 
+                                key={index}
+                                initial={{y: '10%', opacity: 0}}
+                                animate={{y: 0, opacity: 1}}
+                                exit={{y: '10%', opacity: 0}}
+                                transition={{delay: 0.2, duration: 0.15}}
+                            >
                                 <div className="reqImageName">
                                     <div className="image">
                                         <img src={req.senderPhoto} alt={req.username} />
@@ -317,17 +332,31 @@ export default function People() {
                                         <button className="decline" onClick={() => declineRequest(req)}>Decline</button>
                                     }
                                 </div>
-                            </div>
+                            </motion.div>
                         )
                     })}
                 </div>
             }
             {users.length > 0 &&
                 <div className="friends">
-                    <h3>Add People</h3>
+                    <motion.h3 
+                        initial={{y: '-10%', opacity: 0}}
+                        animate={{y: 0, opacity: 1}}
+                        exit={{y: '-10%', opacity: 0}}
+                        transition={{duration: 0.15}}
+                    >
+                        Add People
+                    </motion.h3>
                     {users.map((user, index) => {
                         return (
-                            <div key={index} className="user">
+                            <motion.div
+                                key={index} 
+                                className="user"
+                                initial={{y: '10%', opacity: 0}}
+                                animate={{y: 0, opacity: 1}}
+                                exit={{y: '10%', opacity: 0}}
+                                transition={{delay: 0.2, duration: 0.15}}
+                            >
                                 <div className="photoName">
                                     <div className="image">
                                         <img src={user.profileImage} alt={user.username} />
@@ -335,7 +364,7 @@ export default function People() {
                                     <div className="username">{user.username}</div>
                                 </div>
                                 { buttons(user) }
-                            </div>
+                            </motion.div>
                         )
                     })}
                 </div>
