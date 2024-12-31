@@ -8,8 +8,8 @@ const mongoose = require('mongoose')
 const MongoStore = require('connect-mongo')
 const passport = require('passport')
 const UserAuthRoutes = require('./Routes/UserAuthRoutes')
-const ChatRoutes = require('./Routes/ChatRoutes')
 const FriendRequestsRoutes = require('./Routes/FriendRequestsRoutes')
+const ChatRoutes = require('./Routes/ChatRoutes')
 const app = express();
 
 app.use(cors({
@@ -46,6 +46,7 @@ app.use(passport.session())
 app.use(UserAuthRoutes)
 app.use(FriendRequestsRoutes)
 app.use(ChatRoutes)
+
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {

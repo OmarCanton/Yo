@@ -102,7 +102,6 @@ router.post('/accept-friend-request', async (req, res) => {
 })
 router.post('/decline-friend-request', async (req, res) => {
     const {userId, reqId} = req.body
-    console.log('reqId::: ', reqId)
 
     try {
         //check Users existence
@@ -150,4 +149,63 @@ router.get('/fetchFriends/:userId', async (req, res) => {
     }
 })
 
+router.post('/unfriend', async (req, res) => {
+    const {userId, friendId} = req.body
+    try {
+        const loggedInUser = await Users.findById(userId)
+        const friend = await Users.findById(friendId)
+
+        if(!loggedInUser) return res.json({success: false, error: 'User not found'})
+        if(!friend) return res.json({success: false, error: 'User not found'})
+
+        loggedInUser.friends = loggedInUser.friends.filter(friend => friend.userId !== friendId)
+        friend.friends = friend.friends.filter(friend => friend.userId !== userId)
+
+        loggedInUser.save()
+        friend.save()
+
+        res.json({success: true, message: `${friend.username} unfriended`})
+
+    } catch (err) {
+        res.json({success: false, error: err})
+    }
+})
+router.get('/findFriend/:userId/:keyword', async (req, res) => {
+    const { userId, keyword } = req.params
+    const search = new RegExp(keyword, 'i')
+    
+    try {
+        const user = await Users.findById(userId)
+        if(!user) return res.json({success: false, error: 'User not found'})
+        
+        const searchedFriends = user.friends.filter(friend => search.test(friend.username))
+
+        res.json({success: true, searchedFriends})
+    } catch (err) {
+        res.json({success: false, error: err})
+    }
+})
+router.get('/findPeople/:userId/:keyword', async (req, res) => {
+    const { userId, keyword } = req.params
+    const search = new RegExp(keyword, 'i')
+
+    try {
+        const user = await Users.findById(userId)
+        if(!user) return res.json({success: false, error: 'user not found'})
+        const username = user.username
+        const excludedUsers = [
+            username,
+            ...user.friends.map(friend => friend.username),
+            ...user.friendRequests.map(req => req.username)
+        ]
+
+        const usernames = await Users.find({ username: { $nin: excludedUsers }})
+
+        const searchResult = usernames.filter(username => search.test(username.username))
+
+        res.json({success: true, searchResult})
+    } catch(err) {
+        res.json({success: false, error: err})
+    }
+})
 module.exports = router

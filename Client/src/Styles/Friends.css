@@ -1,23 +1,25 @@
 .friends-wrapper {
     min-height: 100vh;
-    background-color: rgb(233, 233, 233);
     display: flex;
     align-items: center;
     flex-direction: column;
-    gap: 10px;
-    & .header {
+
+    & .friends-header {
+        width: 100%;
         display: flex;
         align-items: center;
         padding: 15px;
-        gap: 10px;
-        position: relative;
+
         & span {
-            font-weight: bold;
-            font-size: 2rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 20px;
+
+            & p {
+                font-weight: bold;
+                font-size: 2rem;
+            }
         }
         & input {
             border: none;
@@ -29,6 +31,75 @@
             outline: none;
             position: absolute;
             left: 35%;
+        }
+    }
+    & .friends {
+        width: 100%;
+        padding: 20px;
+        display: flex;
+        gap: 20px;
+        flex-direction: column;
+        & .chat {
+            display: flex;
+            background-color: rgb(233, 233, 233);
+            padding: 15px;
+            padding-right: 20px;
+            border-radius: 20px;
+            align-items: center;
+            justify-content: space-between;
+            & .profileName {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                & .profile {
+                    height: 60px;
+                    width: 60px;
+                    clip-path: circle();
+                    & img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                        clip-path: circle();
+                    }
+                }
+            }
+            & .right {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 40px;
+                & .messageIcon {
+                    font-size: 1.9rem;
+                    cursor: pointer;
+                    &:hover {
+                        opacity: 0.6;
+                    }
+                }
+                & button {
+                    padding: 10px;
+                    border: 1px solid red;
+                    color: red;
+                    cursor: pointer;
+                    &:hover {
+                        background-color: red;
+                        color: white;
+                        border: 1px solid white;
+                    }
+                }
+            }
+        }
+        & .noFriend {
+            font-weight: bold;
+            font-size: 1.5rem;
+            width: 100%;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            & a {
+                text-decoration: none;
+            }
         }
     }
 }

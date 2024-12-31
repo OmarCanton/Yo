@@ -10,12 +10,22 @@ import {
 import { CircularProgress } from '@mui/material'
 import { toast } from 'react-hot-toast'
 import { motion } from 'framer-motion'
-
+import { 
+    fetchPeople, 
+    fetchedPeople, 
+    fetchedStatus ,
+    searchPeople
+} from '../Redux/Slice/fetchPeople'
+import { 
+    fetchRequests, 
+    fetchedFReqs, 
+    fetchedReqStatus
+} from '../Redux/Slice/fetchFriendRequests'
+import { useDispatch, useSelector } from 'react-redux'
 
 
 export default function People() {
-    const [users, setUsers] = useState([])
-    const [friendReqs, setFriendReqs] = useState([])
+    const dispatch = useDispatch()
     const [sendingReq, setSendingReq] = useState(null)
     const [removingReq, setRemovingReq] = useState(null)
     const [acceptingReq, setAcceptingReq] = useState(null)
@@ -26,67 +36,26 @@ export default function People() {
     const [reqDeclined, setReqDeclined] = useState(false)  
     const { userId } = useContext(UserDetailsContext)
     const navigate = useNavigate()
-
-    
-
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/getUsers/${userId}`)
-                if(response.data.success === true) {
-                    setUsers(response.data.users)
-                }
-            } catch (err) {
-                if(err.response) {
-                    toast.error(err.response.data.message, {
-                        style: {
-                            backgroundColor: 'white',
-                            color: 'black'
-                        }
-                    })
-                } else {
-                    toast.error('An Unknown error occured', {
-                        style: {
-                            backgroundColor: 'white',
-                            color: 'black'
-                        }
-                    })
-                }
-            }
-        }
-        fetchUsers()
-    }, [userId, reqSent, reqRemoved, reqAccepted, reqDeclined])
-
+    const people = useSelector(fetchedPeople)
+    const status = useSelector(fetchedStatus)
+    const friendRequests = useSelector(fetchedFReqs)
+    const friendReqStat = useSelector(fetchedReqStatus)
+    const [keyword, setKeyword] = useState('')
 
     useEffect(() => {
-        const fetchRequests = async () => {
-            try {
-                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/fetchRequests/${userId}`)
-                if(response.data.success) {
-                    console.log(response.data.requests)
-                    setFriendReqs(response.data.requests)
-                }
-            } catch(err) {
-                if(err.response) {
-                    toast.error(err.response.data.message, {
-                        style: {
-                            backgroundColor: 'white',
-                            color: 'black'
-                        }
-                    })
-                } else {
-                    toast.error('An Unknown error occured', {
-                        style: {
-                            backgroundColor: 'white',
-                            color: 'black'
-                        }
-                    })
-                }
-            }
+        if(userId) {
+            dispatch(fetchPeople(userId))
+            dispatch(fetchRequests(userId))
         }
-        fetchRequests()
-    }, [userId, reqAccepted, reqSent, reqRemoved, reqDeclined])
+    }, [dispatch, userId, reqSent, reqRemoved, reqAccepted, reqDeclined])
 
+    useEffect(() => {
+        if(keyword === '') {
+            dispatch(fetchPeople(userId))
+        } else {
+            dispatch(searchPeople({userId, keyword}))
+        }
+    }, [dispatch, userId, keyword])
 
     const sendFriendRequest = async (user) => {
         setSendingReq(user._id)
@@ -209,7 +178,6 @@ export default function People() {
         const friendsId = user.senderId
         try {
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/accept-friend-request`, {userId, friendsId})
-            console.log('response::: ', response.data)
             if(response.data.success === true) {
                 toast.success(`Say hi to ${user.username} in the chat panel`, {
                     style: {
@@ -285,91 +253,111 @@ export default function People() {
 
 
   return (
-    <div className="friendspage-wrapper">
-        <div className="header">
-            <span>
-                <ArrowBackIosNewRounded style={{fontSize: '1.9rem', cursor: 'pointer'}} onClick={() => navigate(-1)}/>
-                <p>People</p>
-            </span>
-            <input type="text" placeholder="Find People..." />
-        </div>
-        <div className="main">
-            {friendReqs.length > 0 && 
-                <div className="requests">
-                    <motion.h3
-                        initial={{y: '-10%', opacity: 0}}
-                        animate={{y: 0, opacity: 1}}
-                        exit={{y: '-10%', opacity: 0}}
-                        transition={{duration: 0.15}}
-                    >
-                        Friend Requests
-                    </motion.h3>
-                    {friendReqs.map((req, index) => {
-                        return (
-                            <motion.div 
-                                className="req" 
-                                key={index}
-                                initial={{y: '10%', opacity: 0}}
-                                animate={{y: 0, opacity: 1}}
-                                exit={{y: '10%', opacity: 0}}
-                                transition={{delay: 0.2, duration: 0.15}}
-                            >
-                                <div className="reqImageName">
-                                    <div className="image">
-                                        <img src={req.senderPhoto} alt={req.username} />
+        <div className="friendspage-wrapper">
+            <div className="header">
+                <span>
+                    <ArrowBackIosNewRounded style={{fontSize: '1.9rem', cursor: 'pointer'}} onClick={() => navigate(-1)}/>
+                    <p>People</p>
+                </span>
+                <input 
+                    type="search" 
+                    placeholder="Find People..." 
+                    onChange={(e) => setKeyword(e.target.value)}
+                />
+            </div>
+            <div className="main">
+                {friendReqStat === 'loading' && (
+                    <div className="loading">
+                        <CircularProgress />
+                    </div>
+                )}
+                {friendReqStat === 'succeeded' && friendRequests.length > 0 && 
+                    <div className="requests">
+                        <motion.h3
+                            initial={{y: '-10%', opacity: 0}}
+                            animate={{y: 0, opacity: 1}}
+                            exit={{y: '-10%', opacity: 0}}
+                            transition={{duration: 0.15}}
+                        >
+                            Friend Requests
+                        </motion.h3>
+                        {friendRequests.map((req, index) => {
+                            return (
+                                <motion.div 
+                                    className="req" 
+                                    key={index}
+                                    initial={{y: '10%', opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{y: '10%', opacity: 0}}
+                                    transition={{delay: 0.2, duration: 0.15}}
+                                >
+                                    <div className="reqImageName">
+                                        <div className="image">
+                                            <img src={req.senderPhoto} alt={req.username} />
+                                        </div>
+                                        <div className="username">{req.username}</div>
                                     </div>
-                                    <div className="username">{req.username}</div>
-                                </div>
-                                <div className="buttons">
-                                    { acceptingReq === req._id ?
-                                        <CircularProgress style={{width: 25, height: 25}} />
-                                        :
-                                        <button className="accept" onClick={() => acceptRequest(req)}>Accept</button>
-                                    }
-                                    { decliningReq === req._id ?
-                                        <CircularProgress style={{width: 25, height: 25}} />
-                                        :
-                                        <button className="decline" onClick={() => declineRequest(req)}>Decline</button>
-                                    }
-                                </div>
-                            </motion.div>
-                        )
-                    })}
-                </div>
-            }
-            {users.length > 0 &&
-                <div className="friends">
-                    <motion.h3 
-                        initial={{y: '-10%', opacity: 0}}
-                        animate={{y: 0, opacity: 1}}
-                        exit={{y: '-10%', opacity: 0}}
-                        transition={{duration: 0.15}}
-                    >
-                        Add People
-                    </motion.h3>
-                    {users.map((user, index) => {
-                        return (
-                            <motion.div
-                                key={index} 
-                                className="user"
-                                initial={{y: '10%', opacity: 0}}
-                                animate={{y: 0, opacity: 1}}
-                                exit={{y: '10%', opacity: 0}}
-                                transition={{delay: 0.2, duration: 0.15}}
-                            >
-                                <div className="photoName">
-                                    <div className="image">
-                                        <img src={user.profileImage} alt={user.username} />
+                                    <div className="buttons">
+                                        { acceptingReq === req._id ?
+                                            <CircularProgress style={{width: 25, height: 25}} />
+                                            :
+                                            <button className="accept" onClick={() => acceptRequest(req)}>Accept</button>
+                                        }
+                                        { decliningReq === req._id ?
+                                            <CircularProgress style={{width: 25, height: 25}} />
+                                            :
+                                            <button className="decline" onClick={() => declineRequest(req)}>Decline</button>
+                                        }
                                     </div>
-                                    <div className="username">{user.username}</div>
-                                </div>
-                                { buttons(user) }
-                            </motion.div>
-                        )
-                    })}
-                </div>
-            }
+                                </motion.div>
+                            )
+                        })}
+                    </div>
+                }
+                {status === 'loading' && (
+                    <div className="loading">
+                        <CircularProgress />
+                    </div>
+                )}
+                {status === 'succeeded' && people.length > 0 &&
+                    <div className="friends">
+                        <motion.h3 
+                            initial={{y: '-10%', opacity: 0}}
+                            animate={{y: 0, opacity: 1}}
+                            exit={{y: '-10%', opacity: 0}}
+                            transition={{duration: 0.15}}
+                        >
+                            Add People
+                        </motion.h3>
+                        {people.map((user, index) => {
+                            return (
+                                <motion.div
+                                    key={index} 
+                                    className="user"
+                                    initial={{y: '10%', opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{y: '10%', opacity: 0}}
+                                    transition={{delay: 0.2, duration: 0.15}}
+                                >
+                                    <div className="photoName">
+                                        <div className="image">
+                                            <img src={user.profileImage} alt={user.username} />
+                                        </div>
+                                        <div className="username">{user.username}</div>
+                                    </div>
+                                    { buttons(user) }
+                                </motion.div>
+                            )
+                        })}
+                    </div>
+                }
+                {status === 'succeeded' && people.length <= 0 &&  (
+                    <div className='noPeople'>
+                        <p>No people found, come back another time</p>
+                    </div>
+                )}
+                {status === 'failed' && <div className='noPeople'>An error occured, try again in a minute.</div>}
+            </div>
         </div>
-    </div>
-  )
+    )
 }
