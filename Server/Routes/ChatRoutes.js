@@ -16,9 +16,21 @@ router.post('/startChat', async (req, res) => {
 
         //if no existig chat is found, the chat variable is overridden to contain a new chat content instead of the existing
         if(!chat) {
+            const user = await Users.findById(userId)
+            const otherUser = await Users.findById(recipientId)
             chat = new Chats({
                 members: [userId, recipientId],
-                messages: [] //set to an empty array at the start of a chat
+                messages: [], //set to an empty array at the start of a chat
+                userDetails: {
+                    id: user._id,
+                    username: user.username,
+                    profileImage: user.profileImage
+                },
+                otherUsersDetails: {
+                    id: otherUser._id,
+                    username: otherUser.username,
+                    profileImage: otherUser.profileImage
+                }
             });
             await chat.save()
         }

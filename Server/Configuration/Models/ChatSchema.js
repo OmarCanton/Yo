@@ -22,6 +22,16 @@ const ChatSchema = new mongoose.Schema({
             type:String
         }
     ],
+    userDetails: {
+        id: String,
+        username: String,
+        profileImage: String
+    },
+    otherUsersDetails: {
+        id: String,
+        username: String,
+        profileImage: String
+    },
     messages: [MessageSchema],
     lastMessage: {
         type: String

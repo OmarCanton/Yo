@@ -3,6 +3,7 @@ import getProfilePictureReducer from '../Slice/getProfilePicture'
 import fetchFriendsReducer from '../Slice/fetchFriends'
 import peopleReducer from '../Slice/fetchPeople'
 import friendReqsReducer from '../Slice/fetchFriendRequests'
+import chatsReducer from '../Slice/fetchChats'
 
 const store = configureStore({
     reducer: {
@@ -10,6 +11,7 @@ const store = configureStore({
         people: peopleReducer,
         friends: fetchFriendsReducer,
         friendRequests: friendReqsReducer,
+        chat: chatsReducer,
     }
 })
 

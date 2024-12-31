@@ -26,6 +26,7 @@ export default function Friends() {
     const [unfriending, setUnfriending] = useState(null)
     const [unfriended, setUnfriended] = useState(false)
     const [keyword, setKeyword] = useState('')
+    const [startingChat, setStartingChat] = useState(null)
 
     useEffect(() => {
         if(userId){
@@ -77,6 +78,35 @@ export default function Friends() {
             setUnfriended(prevState => !prevState)
         }
     }
+
+    const startChat = async (friend) => {
+        const recipientId = friend.userId
+        setStartingChat(friend.userId)
+        try {
+            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/startChat`, {userId, recipientId})
+            if(response.data.success === true) {
+                navigate('/')
+            }
+            setStartingChat(null)    
+        } catch (err) {
+            if(err.response) {
+                toast.error(err.response.data.message, {
+                    style: {
+                        backgroundColor: 'white',
+                        color: 'black'
+                    }
+                })
+            } else {
+                toast.error('An Unknown error occured', {
+                    style: {
+                        backgroundColor: 'white',
+                        color: 'black'
+                    }
+                })
+            }
+            setStartingChat(null)
+        }
+    }
     
     return (
         <div className="friends-wrapper">
@@ -114,7 +144,11 @@ export default function Friends() {
                                 <p>{friend.username}</p>
                             </div>
                             <div className="right">
-                                <QuestionAnswer className='messageIcon' />
+                                {startingChat === friend.userId ? 
+                                    <CircularProgress /> 
+                                    :
+                                    <QuestionAnswer onClick={() => startChat(friend)} className='messageIcon' />
+                                }
                                 <button onClick={() => handleUnfriend(friend)}>
                                     {unfriending === friend.userId ? 
                                         <CircularProgress style={{width: 25, height: 25}} />
