@@ -50,10 +50,11 @@ export default function People() {
     }, [dispatch, userId, reqSent, reqRemoved, reqAccepted, reqDeclined])
 
     useEffect(() => {
-        if(keyword === '') {
+        const theKeyword = keyword.trim()
+        if(theKeyword === '') {
             dispatch(fetchPeople(userId))
         } else {
-            dispatch(searchPeople({userId, keyword}))
+            dispatch(searchPeople({userId, theKeyword}))
         }
     }, [dispatch, userId, keyword])
 

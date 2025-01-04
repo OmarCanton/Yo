@@ -35,10 +35,11 @@ export default function Friends() {
     }, [dispatch, userId, unfriended])
 
     useEffect(() => {
-        if(keyword === '') {
+        const theKeyword = keyword.trim()
+        if(theKeyword === '') {
             dispatch(fetchFriends(userId))
         } else {
-            dispatch(searchFriend({ userId, keyword }))
+            dispatch(searchFriend({ userId, theKeyword }))
         } 
     }, [dispatch, keyword, userId])
 

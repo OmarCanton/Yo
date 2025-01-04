@@ -49,8 +49,14 @@ router.get('/fetchChats/:userId', async (req, res) => {
         if(!user) return res.json({success: false, error: 'User not found'})
 
         const chats = await Chats.find({members: userId}).sort({updatedAt: -1})
+        const userChats = chats.map(
+            chat => chat.userDetails.id === userId ? 
+            { chatId: chat._id, theChat: chat.otherUsersDetails, chatLastMessage: chat.lastMessage } 
+            :
+            { chatId: chat._id, theChat: chat.userDetails, chatLastMessage: chat.lastMessage}
+        )
 
-        res.json({success: true, chats})
+        res.json({success: true, chats: userChats})
     } catch(err) {
         res.json({success: false, error: err})
     }
@@ -98,7 +104,41 @@ router.post('/sendMessage/:chatId', async (req, res) => {
     }
 })
 
+//fetch user details when requested
+router.get('/getProfile/:userId', async (req, res) => {
+    const { userId } = req.params
+    try {
+        if(!userId) return res.json({success: false, error: 'An unexpected error occured'})
+        const user = await Users.findById(userId)
+        if(!user) return res.json({success: false, error: 'User not found'})
 
+        res.json({success: true, user})
+    } catch(err) {
+        res.json({success: false, error: err})
+    }
+})
+router.get('/findChat/:userId/:keyword', async (req, res) => {
+    const { userId, keyword } = req.params
+    const search  = new RegExp(keyword, 'i')
+    try {
+        if(!userId) return res.json({success: false, error: 'Invalid User'})
+        const user = await Users.findById(userId)
+        if(!user) return res.json({success: false, error: 'User not found'})
+        const chats = await Chats.find({ members: userId }).sort({createdAt: -1})
+        
+        const userChats = chats.map(
+            chat => chat.userDetails.id === userId ?
+            { chatId: chat._id, theChat: chat.otherUsersDetails, chatLastMessage: chat.lastMessage } 
+            :
+            { chatId: chat._id, theChat: chat.userDetails, chatLastMessage: chat.lastMessage}
+        )
+        const chatSearchRes = userChats.filter(chat => search.test(chat.theChat.username))
+
+        res.json({success: true, chatSearchRes})
+    } catch(err) {
+        res.json({success: false, error: err})
+    }
+})
 
 
 

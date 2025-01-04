@@ -12,7 +12,9 @@ import {
     EmojiEmotionsOutlined,
     LogoutRounded,
     PeopleAltRounded,
-    PersonRounded
+    PersonRounded,
+    AccountCircle,
+    DoneRounded
 } from '@mui/icons-material'
 import { UserDetailsContext } from '../Contexts/userDetailsContext'
 import axios from 'axios'
@@ -23,10 +25,17 @@ import StartChat from '../Effects/StartChat.json'
 import {
     fetchChats,
     userChats,
-    chatFetchStatus
+    chatFetchStatus,
+    fetchSearchChats
 } from '../Redux/Slice/fetchChats'
 import { useDispatch, useSelector } from 'react-redux'
-
+import {
+    fetchMessage,
+    userMessages,
+    messageFetchStat
+} from '../Redux/Slice/fetchMessages'
+import { motion } from 'framer-motion'
+import { format } from 'date-fns'
 
 export default function Home() {
     const navigate = useNavigate()
@@ -36,15 +45,24 @@ export default function Home() {
     const status = useSelector(chatFetchStatus)
     const dispatch = useDispatch()
     const [content, setContent] = useState('')
-    const [selectedChat, setSelectedChat] = useState('')
     const inputRef = useRef()
-    const [messages, setMessages] = useState([])
-    const [fetchingMessages, setFetchingMessages] = useState(false)
-    const [isClicked, setIsClicked] = useState(false)
-
+    const messageAreaRef = useRef()
+    const searchIconRef = useRef()
+    const messages = useSelector(userMessages)
+    const messageStatus = useSelector(messageFetchStat)
+    const [lastSelectedChat, setLastSelectedChat] = useState(() => {
+        return localStorage.getItem('lastSelectedChat') || ''
+    })
+    const [lastChatedPartner, setLastChatedPartner] = useState(() => {
+        return localStorage.getItem('lastChatedPartner') || ''
+    })
+    const [partnerProfile, setPartnerProfile] = useState([])
+    const [keyword, setKeyword] = useState('')
     
     useEffect(() => {
-        dispatch(fetchChats(userId))
+        if(userId) {
+            dispatch(fetchChats(userId))
+        }
     }, [dispatch, userId])
 
     const handleLogout = async () => {
@@ -52,8 +70,9 @@ export default function Home() {
         try {
             const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/logout`, {withCredentials: true})
             if(response.data.success) {
-                console.log(response)
                 localStorage.removeItem('isLoggedIn')
+                localStorage.removeItem('lastSelectedChat')
+                localStorage.removeItem('lastChatedPartner')
                 setIsLoggedIn(response.data.success)
                 navigate('/auth/signin')
             }
@@ -77,45 +96,14 @@ export default function Home() {
             setLoggingOut(false)
         }
     }
-    const fetchMessages = async (chatId) => {
-        setSelectedChat(chatId)
-        setFetchingMessages(true)
-        setIsClicked(false)
-        try {
-            const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/fetchMessages/${chatId}`)
-            if(response.data.success === true) {
-                setMessages(response.data.messages)
-            }
-            setFetchingMessages(false)
-            setIsClicked(true)
-        } catch(err) {    
-            if(err.response) {
-                toast.error(err.response.data.message, {
-                    style: {
-                        backgroundColor: 'white',
-                        color: 'black'
-                    }
-                })
-            } else {
-                toast.error('An Unknown error occured', {
-                    style: {
-                        backgroundColor: 'white',
-                        color: 'black'
-                    }
-                })
-            }
-            setFetchingMessages(false)
-            setIsClicked(false)
-        }
-    }
+
 
     const sendMessage = async (chatId) => {
         try {
             const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sendMessage/${chatId}`, { senderId: userId, content })
             if(response.data.success === true) {
-                alert('hey sent, bingo!')
-                console.log(response.data)
                 inputRef.current.value = ''
+                setContent('')
             }
             
         } catch(err) {
@@ -134,9 +122,79 @@ export default function Home() {
                     }
                 })
             }
-            console.log(err)
         }
     } 
+
+    const fetchMessages = (chatId) => {
+        if(chatId) {
+            localStorage.setItem('lastSelectedChat', chatId)
+            dispatch(fetchMessage(chatId))
+            if(dispatch) {
+                setLastSelectedChat(chatId)
+            }
+        }
+    }
+    useEffect(() => {
+        const scrollToBottom = () => {
+            if (messageAreaRef.current) {
+                messageAreaRef.current.scrollTop = messageAreaRef.current.scrollHeight
+            }
+        }
+        scrollToBottom()
+    }, [messages])
+
+    const fetchChatPartnerProfile = async (userId) => {
+        setLastChatedPartner(userId)
+        localStorage.setItem("lastChatedPartner", userId)
+        try {
+            if(userId) {
+                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/getProfile/${userId}`)
+                if(response.data.success === true) {
+                    setPartnerProfile(response.data.user)
+                }
+            }
+        } catch(err) {
+            if(err.response) {
+                toast.error(err.response.data.message, {
+                    style: {
+                        backgroundColor: 'white',
+                        color: 'black'
+                    }
+                })
+            } else {
+                toast.error('An Unknown error occured', {
+                    style: {
+                        backgroundColor: 'white',
+                        color: 'black'
+                    }
+                })
+            }
+        }
+    }
+
+    useEffect(() => {
+        dispatch(fetchMessage(lastSelectedChat))
+        fetchChatPartnerProfile(lastChatedPartner)
+    }, [dispatch, lastSelectedChat, lastChatedPartner])
+    
+
+    const timeStamps = (createdAt) => {
+        const createdDate = new Date(createdAt)
+        const formattedTime = format(createdDate, 'HH:mm')
+
+        return formattedTime
+    }
+
+    useEffect(() => {
+        const theKeyword = keyword.trim()
+        if(theKeyword === '') {
+            dispatch(fetchChats(userId))
+            searchIconRef.current.style.display = 'flex'
+        } else {
+            dispatch(fetchSearchChats({userId, theKeyword}))
+        }
+    }, [dispatch, userId, keyword])
+
 
     return (
         <div className="home-wrapper">
@@ -172,8 +230,15 @@ export default function Home() {
                 <div className="chats">
                     <span className="chats-header">
                         <p>Chats</p>
-                        <input type="text" placeholder='Search Chat' />
-                        <SearchRounded className='searchIcon2' />
+                        <input 
+                            type="search" 
+                            placeholder='Search Chat' 
+                            onChange={(e) => { 
+                                setKeyword(e.target.value)
+                                searchIconRef.current.style.display = 'none'
+                            }}
+                        />
+                        <SearchRounded ref={searchIconRef} className='searchIcon2' />
                     </span>
                     <div className="friends">
                         {status === 'loading' && 
@@ -182,88 +247,149 @@ export default function Home() {
                         {status === 'succeeded' && chats.length <= 0 && <div className='noChat'>No conversations yet</div>}
                         {(status === 'succeeded' && chats.length > 0) && chats.map((chat, index) => {
                             return (
-                                <div 
+                                <motion.div 
                                     className="chat" 
-                                    key={index}
-                                    onClick={() => fetchMessages(chat._id)}
+                                    key={index}    
+                                    initial={{y: '10%', opacity: 0}}
+                                    animate={{y: 0, opacity: 1}}
+                                    exit={{y: '10%', opacity: 0}}
+                                    onClick={() => { 
+                                        fetchMessages(chat.chatId)
+                                        fetchChatPartnerProfile(chat.theChat.id)
+                                    }}
                                 >
+                                    {lastChatedPartner === chat.theChat.id &&
+                                        <motion.div 
+                                            className="selectedChatIndicator"
+                                            initial={{x: -3, opacity: 0}}
+                                            animate={{x: 0, opacity: 1}}
+                                        ></motion.div>
+                                    }
                                     <div className="image">
-                                        <img 
-                                            src={ userId === chat.userDetails.id ? 
-                                                chat.otherUsersDetails.profileImage 
-                                                : 
-                                                chat.userDetails.profileImage
-                                            } 
-                                            alt=''
+                                        <img
+                                            src={chat.theChat.profileImage}
+                                            alt={chat.theChat.username}
                                         />
                                     </div>
                                     <div className='usernameLMsg'>
                                         <p className='username'>
-                                            {userId === chat.userDetails.id ? 
-                                                chat.otherUsersDetails.username 
-                                                : 
-                                                chat.userDetails.username
-                                            }
+                                            {chat.theChat.username}
                                         </p>
                                         <small className='lastMessage'>
-                                            {chat.lastMessage}
+                                            {chat.chatLastMessage}
                                         </small>
                                     </div>
-                                </div>
+                                </motion.div>
                             )
                         })}
-                        {status === 'failed' && <div className='noChat'>Check your Internet Connection</div>}
+                        {status === 'failed' && <div className='loading'><CircularProgress /></div>}
                     </div>
                     <pre className="collapseExpand"><ArrowBackIosNew style={{fontSize: 'large', cursor: 'pointer'}}/></pre>
                 </div>
                 <div className="chatArea">
-                    <div className="chatHead"></div>
-                    <div className="messageArea">
-                        {fetchingMessages && <CircularProgress />}
-                        {!fetchingMessages && messages.length > 0 && messages.map((message, index) => {
-                            return (
-                                <div key={index} className="leftMessages">
-                                    {message.senderId !== userId && 
-                                        <div>{message.content}</div>
-                                    }
+                    {lastSelectedChat ?
+                        <>
+                            <div className="chatHead">
+                                <div className="chatPartner">
+                                    <div className='profileName'>
+                                        <div className="image">
+                                            {partnerProfile.profileImage ?
+                                                <img src={partnerProfile.profileImage} alt={partnerProfile.username} />
+                                                : 
+                                                <AccountCircle htmlColor='grey' style={{width: '100%', height: '100%'}} />
+                                            }
+                                        </div>
+                                        <div className="partner-username">
+                                            {partnerProfile.username}
+                                        </div>
+                                    </div>
+                                    <div className="otherOps"><MoreHoriz /></div>
                                 </div>
-                            )
-                        })}
-                        {!fetchingMessages && messages.length > 0 && messages.map((message, index) => {
-                            return (
-                                <div key={index} className="rightMessages">
-                                    {message.senderId === userId && 
-                                        <div>{message.content}</div>
-                                    }
+                            </div>
+                            <div ref={messageAreaRef} className="messageArea">
+                                {(messageStatus === 'succeeded' && Object.keys(messages).length <= 0) && 
+                                    <p className='noChat'>No chat history available</p>
+                                }
+                                {(messageStatus === 'succeeded' && Object.keys(messages).length > 0) && Object.keys(messages).map(date => (
+                                    <div className='groupedMessagesByDate' key={date}>
+                                        <div className='date'>
+                                            <small>{date}</small>
+                                        </div>
+                                        {messages[date].map(message => {
+                                            return(
+                                                <motion.div 
+                                                    initial={{y: '10%', opacity: 0}}
+                                                    animate={{y: 0, opacity: 1}}
+                                                    exit={{y: '10%', opacity: 0}}
+                                                    key={message._id}
+                                                    style={{
+                                                        alignSelf: message.senderId === userId ? 'flex-end' : 'flex-start', 
+                                                        backgroundColor: message.senderId === userId ? 'rgb(7, 141, 252)' : 'rgb(141, 141, 141)',
+                                                    }}
+                                                    className="msg"
+                                                >
+                                                    {message.content}
+                                                    <small style={{
+                                                        alignSelf: message.senderId === userId ? 'flex-end' : 'flex-start',
+                                                    }}>
+                                                        {timeStamps(message.createdAt)}
+                                                        {message.status === 'sent' && message.senderId === userId && <DoneRounded fontSize='small'/>}
+                                                    </small>
+                                                </motion.div>
+                                            )
+                                        })}
+                                    </div>
+                                ))}
+                                {messageStatus === 'failed' && <div className='noChat'>Error loading messages</div>}
+                            </div>
+                            <div className="inputs">
+                                <div className="textInput">
+                                    <div className="left">
+                                        <div className="media"><PhotoLibraryRounded className='sendPicVid' htmlColor='#3C3C3C' /></div>
+                                        <div className="documentsfiles"><DescriptionRounded className='sendDoc' htmlColor='#3C3C3C' /></div>
+                                    </div>
+                                    <textarea 
+                                        ref={inputRef}
+                                        type="text"
+                                        placeholder='Type messages here...'
+                                        onChange={(e) => setContent(e.target.value)}
+                                        rows={1}
+                                    ></textarea>
+                                    <div 
+                                        onClick={() => sendMessage(lastSelectedChat)} 
+                                        className="senderIcon"
+                                        style={{
+                                            pointerEvents: content === '' ? 'none' : 'all',
+                                            backgroundColor: content === '' && 'grey',
+                                            cursor: content === '' && 'not-allowed',
+                                        }}
+                                        title={content === '' ? 'Mesage empty' : 'Send Message'}
+                                    >
+                                        <ArrowUpwardRounded htmlColor='white' />
+                                    </div>
                                 </div>
-                            )
-                        })} 
-                        {!isClicked &&
-                            <div className="animationCont">
+                                <div className="right">
+                                    <div className="emojis"><EmojiEmotionsOutlined htmlColor='#3C3C3C' fontSize='large' /></div>
+                                    <div className="audioRecorder"><Mic htmlColor='white' /></div>
+                                </div>
+                            </div>
+                        </>
+                        :
+                        <div 
+                            className="animationCont"
+                        >
+                            <motion.span     
+                                initial={{y: '10%', opacity: 0}}
+                                animate={{y: 0, opacity: 1, transition: {
+                                    delay: 2.5
+                                }}}
+                                exit={{y: '10%', opacity: 0}}
+                            >
                                 <Lottie className='animation' animationData={StartChat}/>
-                                <h3>Select a chat to start a conversation</h3>
-                            </div>
-                        }
-                    </div>
-                    <div className="inputs">
-                        <div className="textInput">
-                            <div className="left">
-                                <div className="media"><PhotoLibraryRounded className='sendPicVid' htmlColor='#3C3C3C' /></div>
-                                <div className="documentsfiles"><DescriptionRounded className='sendDoc' htmlColor='#3C3C3C' /></div>
-                            </div>
-                            <input 
-                                ref={inputRef}
-                                type="text" 
-                                placeholder='Type messages here...'
-                                onChange={(e) => setContent(e.target.value)}
-                            />
-                            <div onClick={() => sendMessage(selectedChat)} className="senderIcon"><ArrowUpwardRounded htmlColor='white' /></div>
+                                <h3>Select a chat to start conversation</h3>
+                            </motion.span>
                         </div>
-                        <div className="right">
-                            <div className="emojis"><EmojiEmotionsOutlined htmlColor='#3C3C3C' fontSize='large' /></div>
-                            <div className="audioRecorder"><Mic htmlColor='white' /></div>
-                        </div>
-                    </div>
+                    }
                 </div>
             </div>
         </div>

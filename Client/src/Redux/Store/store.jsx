@@ -4,6 +4,7 @@ import fetchFriendsReducer from '../Slice/fetchFriends'
 import peopleReducer from '../Slice/fetchPeople'
 import friendReqsReducer from '../Slice/fetchFriendRequests'
 import chatsReducer from '../Slice/fetchChats'
+import fetchMessagesReducer from '../Slice/fetchMessages'
 
 const store = configureStore({
     reducer: {
@@ -12,6 +13,7 @@ const store = configureStore({
         friends: fetchFriendsReducer,
         friendRequests: friendReqsReducer,
         chat: chatsReducer,
+        message: fetchMessagesReducer
     }
 })
 

@@ -6,8 +6,8 @@ export const fetchFriends = createAsyncThunk('friends/fetchFriends', async (user
     const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/fetchFriends/${userId}`)
     return response.data.friends
 })
-export const searchFriend = createAsyncThunk('friends/searchFriend', async ({userId, keyword}) => {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/findFriend/${userId}/${keyword}`)
+export const searchFriend = createAsyncThunk('friends/searchFriend', async ({userId, theKeyword}) => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/findFriend/${userId}/${theKeyword}`)
     return response.data.searchedFriends
 })
 

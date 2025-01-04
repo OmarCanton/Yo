@@ -6,8 +6,8 @@ export const fetchPeople = createAsyncThunk('people/fetchPeople', async (userId)
     return response.data.users
 })
 
-export const searchPeople = createAsyncThunk('people/searchPeople', async ({userId, keyword}) => {
-    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/findPeople/${userId}/${keyword}`)
+export const searchPeople = createAsyncThunk('people/searchPeople', async ({userId, theKeyword}) => {
+    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/findPeople/${userId}/${theKeyword}`)
     return response.data.searchResult
 })
 
