@@ -21,7 +21,6 @@ const socketSetup = (server) => {
                 })
             }
         }
-        
         io.emit('getActiveUsers', activeUsers)
 
         socket.on('disconnect', () => {

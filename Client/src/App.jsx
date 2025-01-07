@@ -62,29 +62,16 @@ export default function App() {
         checkAuth()
     }, [])
     
-    const onlineBroadcaster = (name) => {
-        if(name) {
-            return (
-                toast.success(`${name} online`, {
-                    position: 'top-center',
-                    style: {
-                        backgroundColor: "rgb(233, 233, 233)",
-                        color: 'lightgrey'
-                    }
-                })
-            )
-        }
-    }
-
+    
     useEffect(() => {
         if(userId) {
+            //Establishing a socket Io connection to the backend socket Io
             socket.current = io(import.meta.env.VITE_BACKEND_URL, {
                 withCredentials: true,
                 query: { userId }
             })
             socket.current.on('connect', () => {
                 console.log(`User ${userId} connected to the socket with ${socket.current.id}`)
-                onlineBroadcaster(username)
             })
             socket.current.on('getActiveUsers', (activeUsers) => {
                 setActiveUsers(activeUsers)
@@ -93,7 +80,7 @@ export default function App() {
                 socket.current.disconnect()
             }
         }
-    }, [userId, username])
+    }, [userId])
 
     return (
         <SocketContext.Provider value={{activeUsers}}>
