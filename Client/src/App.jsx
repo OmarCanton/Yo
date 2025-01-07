@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Routes, Route, useLocation } from "react-router-dom"
 import Home from './Pages/Home'
 import SignUp from "./Pages/SignUp"
@@ -19,7 +19,8 @@ import {
     profilePicture
 } from './Redux/Slice/getProfilePicture'
 import { useDispatch, useSelector } from 'react-redux'
-
+import { SocketContext } from "./Contexts/SocketContext"
+import { io } from 'socket.io-client'
 
 export default function App() {
     const [userId, setUserId] = useState('')
@@ -33,6 +34,8 @@ export default function App() {
     const loadingProfilePhoto = useSelector(loading)
     const dispatch = useDispatch()
     const id = localStorage.getItem('user_id')
+    const socket = useRef()
+    const [activeUsers, setActiveUsers] = useState([])
 
     useEffect(() => {
         dispatch(fetchPicture(id))
@@ -59,9 +62,41 @@ export default function App() {
         checkAuth()
     }, [])
     
+    const onlineBroadcaster = (name) => {
+        if(name) {
+            return (
+                toast.success(`${name} online`, {
+                    position: 'top-center',
+                    style: {
+                        backgroundColor: "rgb(233, 233, 233)",
+                        color: 'lightgrey'
+                    }
+                })
+            )
+        }
+    }
+
+    useEffect(() => {
+        if(userId) {
+            socket.current = io(import.meta.env.VITE_BACKEND_URL, {
+                withCredentials: true,
+                query: { userId }
+            })
+            socket.current.on('connect', () => {
+                console.log(`User ${userId} connected to the socket with ${socket.current.id}`)
+                onlineBroadcaster(username)
+            })
+            socket.current.on('getActiveUsers', (activeUsers) => {
+                setActiveUsers(activeUsers)
+            })
+            return () => {
+                socket.current.disconnect()
+            }
+        }
+    }, [userId, username])
 
     return (
-        <>
+        <SocketContext.Provider value={{activeUsers}}>
             <Toaster   
                 position='bottom-right'
                 toastOptions={{ duration: 3000 }} 
@@ -90,6 +125,6 @@ export default function App() {
                     </Routes>
                 </AnimatePresence>
             </UserDetailsContext.Provider>
-        </>
+        </SocketContext.Provider>
     )
 }

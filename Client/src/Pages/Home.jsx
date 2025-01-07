@@ -36,10 +36,12 @@ import {
 } from '../Redux/Slice/fetchMessages'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
+import { SocketContext } from '../Contexts/SocketContext'
 
 export default function Home() {
     const navigate = useNavigate()
     const { setIsLoggedIn, userId } = useContext(UserDetailsContext)
+    const { activeUsers } = useContext(SocketContext)
     const [loggingOut, setLoggingOut] = useState(false)
     const chats = useSelector(userChats)
     const status = useSelector(chatFetchStatus)
@@ -58,7 +60,7 @@ export default function Home() {
     })
     const [partnerProfile, setPartnerProfile] = useState([])
     const [keyword, setKeyword] = useState('')
-    
+
     useEffect(() => {
         if(userId) {
             dispatch(fetchChats(userId))
@@ -265,6 +267,9 @@ export default function Home() {
                                             animate={{x: 0, opacity: 1}}
                                         ></motion.div>
                                     }
+                                    {activeUsers.some(user => user.userId == chat.theChat.id) &&
+                                        <p className="status"></p>
+                                    }
                                     <div className="image">
                                         <img
                                             src={chat.theChat.profileImage}
@@ -300,7 +305,8 @@ export default function Home() {
                                             }
                                         </div>
                                         <div className="partner-username">
-                                            {partnerProfile.username}
+                                            <p>{partnerProfile.username}</p>
+                                            <small>{activeUsers.some(user => user.userId == partnerProfile._id) ? 'Online' : 'Offline'}</small>
                                         </div>
                                     </div>
                                     <div className="otherOps"><MoreHoriz /></div>

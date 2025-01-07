@@ -134,6 +134,15 @@
                         position: absolute;
                         left: 5px;
                     }
+                    & .status {
+                        position: absolute;
+                        right: 10px;
+                        top: 10px;
+                        width: 10px;
+                        height: 10px;
+                        border-radius: 50%;
+                        background-color: yellowgreen;
+                    }
                     & .image {
                         display: flex;
                         height: 60px;
@@ -237,8 +246,12 @@
                             }
                         }
                         & .partner-username {
-                            font-weight: 600;
-                            font-size: 1.3rem;
+                            display: flex;
+                            flex-direction: column;
+                            & p{
+                                font-weight: 600;
+                                font-size: 1.3rem;
+                            }
                         }
                     }
                     & .otherOps {

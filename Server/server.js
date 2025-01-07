@@ -10,6 +10,7 @@ const passport = require('passport')
 const UserAuthRoutes = require('./Routes/UserAuthRoutes')
 const FriendRequestsRoutes = require('./Routes/FriendRequestsRoutes')
 const ChatRoutes = require('./Routes/ChatRoutes')
+const socketSetup = require('./Socket/SocketIo.js')
 const app = express();
 
 app.use(cors({
@@ -49,6 +50,9 @@ app.use(ChatRoutes)
 
 
 const PORT = process.env.PORT
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server running on Port ${PORT}`)
 })
+
+//Establishing socketIo connection
+socketSetup(server)
