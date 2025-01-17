@@ -38,7 +38,10 @@ const socketSetup = (server) => {
                 content
             })
             chat.lastMessage = content
-            
+          
+            //I'm here too increment the count when user sends message
+
+
             // const existingUnreadMsg = chat.unreadMsgsTrack.find(user => user.senderId === senderId && user.receiverId === receiverId )
             // if(existingUnreadMsg) {
             //     existingUnreadMsg.count += 1
@@ -91,6 +94,10 @@ const socketSetup = (server) => {
                 )
                 socket.emit('getChats', userChats)
             }
+        })
+
+        socket.on('openChat', () => {
+            //I'm here, clearing thje unread tag when user opens chat!
         })
 
         socket.on('disconnect', () => {
