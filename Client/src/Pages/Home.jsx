@@ -22,50 +22,155 @@ import { CircularProgress } from '@mui/material'
 import { toast } from 'react-hot-toast'
 import Lottie from 'lottie-react'
 import StartChat from '../Effects/StartChat.json'
-import {
-    fetchChats,
+import { 
+    fetchChats, 
+    chatStatus, 
     userChats,
-    chatFetchStatus,
     fetchSearchChats
-} from '../Redux/Slice/fetchChats'
+} from '../Redux/Slice/fetchUserChats'
 import { useDispatch, useSelector } from 'react-redux'
-import {
-    fetchMessage,
-    userMessages,
-    messageFetchStat
-} from '../Redux/Slice/fetchMessages'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
-import { SocketContext } from '../Contexts/SocketContext'
+import { io } from 'socket.io-client'
+import { setSocketConnection, socketConct } from '../Redux/Slice/SocketSlice'
 
 export default function Home() {
     const navigate = useNavigate()
-    const { setIsLoggedIn, userId } = useContext(UserDetailsContext)
-    const { activeUsers } = useContext(SocketContext)
+    const { 
+        setIsLoggedIn, 
+        userId, 
+        content, 
+        setContent,
+        lastSelectedChat, 
+        setLastSelectedChat, 
+        lastChatedPartner, 
+        setLastChatedPartner 
+    } = useContext(UserDetailsContext)
     const [loggingOut, setLoggingOut] = useState(false)
     const chats = useSelector(userChats)
-    const status = useSelector(chatFetchStatus)
+    const status = useSelector(chatStatus)
     const dispatch = useDispatch()
-    const [content, setContent] = useState('')
     const inputRef = useRef()
     const messageAreaRef = useRef()
     const searchIconRef = useRef()
-    const messages = useSelector(userMessages)
-    const messageStatus = useSelector(messageFetchStat)
-    const [lastSelectedChat, setLastSelectedChat] = useState(() => {
-        return localStorage.getItem('lastSelectedChat') || ''
-    })
-    const [lastChatedPartner, setLastChatedPartner] = useState(() => {
-        return localStorage.getItem('lastChatedPartner') || ''
-    })
     const [partnerProfile, setPartnerProfile] = useState([])
     const [keyword, setKeyword] = useState('')
+    const socket = useSelector(socketConct)
+    const [activeUsers, setActiveUsers] = useState([])
+    const [fetchingMsgs, setFetchingMsgs] = useState(false)
+    const [messages, setMessages] = useState({})
+    const [lastMsg, setLastMsg] = useState('')
+
+
+    //Utility function to formate the messages
+    const groupMessagesByDate = (messages) => {
+        const grouped = {}
+        const today = new Date()
+        const yesterday = new Date()
+        yesterday.setDate(today.getDate() - 1)
+        
+        messages.forEach(msg => {
+            const date = new Date(msg.createdAt)
+            let dateKey
+            if(date.toDateString() === today.toDateString()) {
+                dateKey = 'Today'
+            } else if(date.toDateString() === yesterday.toDateString()) {
+                dateKey = 'Yesterday'
+            } else {
+                dateKey = date.toDateString()
+            }
+            if(!grouped[dateKey]) {
+                grouped[dateKey] = []
+            }
+            grouped[dateKey].push(msg)
+        })
+        return grouped
+    }
+    
+    useEffect(() => {
+        const fetchMessages = async (lastSelectedChat) => {
+            if(lastSelectedChat) {
+                setFetchingMsgs(true)
+                try {
+                    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/fetchMessages/${lastSelectedChat}`)
+                    if(response.data.success === true) {
+                        setMessages(groupMessagesByDate(response.data.messages))
+                    }
+                    localStorage.setItem('lastSelectedChat', lastSelectedChat)
+                    setFetchingMsgs(false)
+                } catch (err) {
+                    if(err.response) {
+                        toast.error(err.response.data.message, {
+                            style: {
+                                backgroundColor: 'white',
+                                color: 'black'
+                            }
+                        })
+                    } else {
+                        toast.error('An Unknown error occured', {
+                            style: {
+                                backgroundColor: 'white',
+                                color: 'black'
+                            }
+                        })
+                    }
+                    setFetchingMsgs(false)
+                }
+            }
+        }
+        const fetchChatPartnerProfile = async (lastChatedPartner) => {
+            localStorage.setItem("lastChatedPartner", lastChatedPartner)
+            try {
+                if(lastChatedPartner) {
+                    const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/getProfile/${lastChatedPartner}`)
+                    if(response.data.success === true) {
+                        setPartnerProfile(response.data.user)
+                    }
+                }
+            } catch(err) {
+                if(err.response) {
+                    toast.error(err.response.data.message, {
+                        style: {
+                            backgroundColor: 'white',
+                            color: 'black'
+                        }
+                    })
+                } else {
+                    toast.error('An Unknown error occured', {
+                        style: {
+                            backgroundColor: 'white',
+                            color: 'black'
+                        }
+                    })
+                }
+            }
+        }
+        fetchChatPartnerProfile(lastChatedPartner)
+        fetchMessages(lastSelectedChat)
+    }, [lastChatedPartner, lastSelectedChat, setLastChatedPartner, setLastSelectedChat])
+    
 
     useEffect(() => {
         if(userId) {
-            dispatch(fetchChats(userId))
+            const socketConnection = io(import.meta.env.VITE_BACKEND_URL, {
+                withCredentials: true,
+                query: { userId }
+            })
+            dispatch(setSocketConnection(socketConnection))
+            socketConnection.emit('fetchChats', userId)
+            socketConnection.on('getChats', (chats) => {
+                dispatch(fetchChats(chats))
+            })
         }
-    }, [dispatch, userId])
+    }, [dispatch, userId, content])
+
+    useEffect(() => {
+        if(socket) {
+            socket.on('getActiveUsers', (users) => {
+                setActiveUsers(users)
+            })
+        }
+    }, [socket, userId])
 
     const handleLogout = async () => {
         setLoggingOut(true)
@@ -76,6 +181,7 @@ export default function Home() {
                 localStorage.removeItem('lastSelectedChat')
                 localStorage.removeItem('lastChatedPartner')
                 setIsLoggedIn(response.data.success)
+                socket.disconnect()
                 navigate('/auth/signin')
             }
             setLoggingOut(false)
@@ -99,43 +205,50 @@ export default function Home() {
         }
     }
 
-
-    const sendMessage = async (chatId) => {
-        try {
-            const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/sendMessage/${chatId}`, { senderId: userId, content })
-            if(response.data.success === true) {
-                inputRef.current.value = ''
-                setContent('')
-            }
-            
-        } catch(err) {
-            if(err.response) {
-                toast.error(err.response.data.message, {
-                    style: {
-                        backgroundColor: 'white',
-                        color: 'black'
-                    }
-                })
-            } else {
-                toast.error('An Unknown error occured', {
-                    style: {
-                        backgroundColor: 'white',
-                        color: 'black'
-                    }
-                })
-            }
+    useEffect(() => {
+        if(socket) {
+            socket.on('getMessages', (message) => {
+                const messages = Object.values(message.message)
+                const lastMessage = messages[messages.length - 1]
+                const openedChatPartner = localStorage.getItem('lastChatedPartner')
+                if(lastMessage.senderId === openedChatPartner) {
+                    const newMessage = groupMessagesByDate(message.message)
+                    setMessages(prevState => ({
+                        ...prevState,
+                        ...newMessage
+                    }))
+                }
+            })
+            socket.on('getLastMessage', (lastMessage) =>  {
+                setLastMsg(lastMessage)               
+            })
         }
-    } 
-
-    const fetchMessages = (chatId) => {
-        if(chatId) {
-            localStorage.setItem('lastSelectedChat', chatId)
-            dispatch(fetchMessage(chatId))
-            if(dispatch) {
-                setLastSelectedChat(chatId)
-            }
+    }, [socket, lastChatedPartner, lastMsg])
+    useEffect(() => {
+        if(socket) {
+            socket.on('getSenderMessages', (message) => {
+                const newMessage = groupMessagesByDate(message)
+                setMessages(prevState => ({
+                    ...prevState,
+                    ...newMessage
+                }))
+            })    
         }
+    }, [socket])
+
+    const handleSendMessage = async (chatId, receiverId) => {
+        if(socket && userId) {
+            socket.emit('sendMessage', ({
+                chatId, 
+                senderId: userId, 
+                receiverId, 
+                content
+            }))
+        }
+        inputRef.current.value = ''
+        setContent('')
     }
+
     useEffect(() => {
         const scrollToBottom = () => {
             if (messageAreaRef.current) {
@@ -145,41 +258,7 @@ export default function Home() {
         scrollToBottom()
     }, [messages])
 
-    const fetchChatPartnerProfile = async (userId) => {
-        setLastChatedPartner(userId)
-        localStorage.setItem("lastChatedPartner", userId)
-        try {
-            if(userId) {
-                const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/getProfile/${userId}`)
-                if(response.data.success === true) {
-                    setPartnerProfile(response.data.user)
-                }
-            }
-        } catch(err) {
-            if(err.response) {
-                toast.error(err.response.data.message, {
-                    style: {
-                        backgroundColor: 'white',
-                        color: 'black'
-                    }
-                })
-            } else {
-                toast.error('An Unknown error occured', {
-                    style: {
-                        backgroundColor: 'white',
-                        color: 'black'
-                    }
-                })
-            }
-        }
-    }
-
-    useEffect(() => {
-        dispatch(fetchMessage(lastSelectedChat))
-        fetchChatPartnerProfile(lastChatedPartner)
-    }, [dispatch, lastSelectedChat, lastChatedPartner])
     
-
     const timeStamps = (createdAt) => {
         const createdDate = new Date(createdAt)
         const formattedTime = format(createdDate, 'HH:mm')
@@ -189,14 +268,30 @@ export default function Home() {
 
     useEffect(() => {
         const theKeyword = keyword.trim()
-        if(theKeyword === '') {
-            dispatch(fetchChats(userId))
+        if(theKeyword === '' && socket) {
+            socket.emit('fetchChats', userId)
+            socket.on('getChats', (chats) => {
+                dispatch(fetchChats(chats))
+            })
             searchIconRef.current.style.display = 'flex'
         } else {
             dispatch(fetchSearchChats({userId, theKeyword}))
         }
-    }, [dispatch, userId, keyword])
+    }, [dispatch, userId, keyword, socket])
 
+
+    // const fetchUnreadCount = async (chatId, userId) =>  {    
+    //     try {
+    //         const response = await  axios.get(`${import.meta.env.VITE_BACKEND_URL}/fetchUnreadCount/${chatId}/${userId}`)
+    //         console.log(response.data)
+    //     } catch (err) {
+    //         console.log(err)
+    //     }
+    // }
+
+    // useEffect(() => {
+    //     fetchUnreadCount()
+    // }, [])
 
     return (
         <div className="home-wrapper">
@@ -256,8 +351,8 @@ export default function Home() {
                                     animate={{y: 0, opacity: 1}}
                                     exit={{y: '10%', opacity: 0}}
                                     onClick={() => { 
-                                        fetchMessages(chat.chatId)
-                                        fetchChatPartnerProfile(chat.theChat.id)
+                                        setLastSelectedChat(chat.chatId)
+                                        setLastChatedPartner(chat.theChat.id)
                                     }}
                                 >
                                     {lastChatedPartner === chat.theChat.id &&
@@ -281,7 +376,8 @@ export default function Home() {
                                             {chat.theChat.username}
                                         </p>
                                         <small className='lastMessage'>
-                                            {chat.chatLastMessage}
+                                            {(lastMsg && lastMsg.chatId === chat.chatId) ? lastMsg.lastMessage : chat.chatLastMessage}
+                                            {/* {chat.} */}
                                         </small>
                                     </div>
                                 </motion.div>
@@ -313,10 +409,11 @@ export default function Home() {
                                 </div>
                             </div>
                             <div ref={messageAreaRef} className="messageArea">
-                                {(messageStatus === 'succeeded' && Object.keys(messages).length <= 0) && 
+                                {Object.keys(messages).length <= 0 && 
                                     <p className='noChat'>No chat history available</p>
                                 }
-                                {(messageStatus === 'succeeded' && Object.keys(messages).length > 0) && Object.keys(messages).map(date => (
+                                {fetchingMsgs && <CircularProgress />}
+                                {(Object.keys(messages).length > 0) && Object.keys(messages).map(date => (
                                     <div className='groupedMessagesByDate' key={date}>
                                         <div className='date'>
                                             <small>{date}</small>
@@ -345,8 +442,8 @@ export default function Home() {
                                             )
                                         })}
                                     </div>
-                                ))}
-                                {messageStatus === 'failed' && <div className='noChat'>Error loading messages</div>}
+                                ))} 
+                                {/* {messageStatus === 'failed' && <div className='noChat'>Error loading messages</div>} */}
                             </div>
                             <div className="inputs">
                                 <div className="textInput">
@@ -362,7 +459,7 @@ export default function Home() {
                                         rows={1}
                                     ></textarea>
                                     <div 
-                                        onClick={() => sendMessage(lastSelectedChat)} 
+                                        onClick={() => handleSendMessage(lastSelectedChat, lastChatedPartner)} 
                                         className="senderIcon"
                                         style={{
                                             pointerEvents: content === '' ? 'none' : 'all',

@@ -33,6 +33,20 @@ const ChatSchema = new mongoose.Schema({
         profileImage: String
     },
     messages: [MessageSchema],
+    count: {
+        type: Number,
+        default: 0
+    },
+    // unreadMsgsTrack: [
+    //     {
+    //         senderId: String,
+    //         receiverId: String,
+    //         count: { 
+    //             type: Number,
+    //             default: 0
+    //         }
+    //     },
+    // ],
     lastMessage: {
         type: String
     }

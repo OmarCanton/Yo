@@ -136,12 +136,13 @@
                     }
                     & .status {
                         position: absolute;
-                        right: 10px;
-                        top: 10px;
+                        left: 20%;
+                        top: 65%;
                         width: 10px;
                         height: 10px;
                         border-radius: 50%;
                         background-color: yellowgreen;
+                        z-index: 99;
                     }
                     & .image {
                         display: flex;
@@ -174,6 +175,15 @@
                             line-clamp: 1;
                             text-overflow: ellipsis;
                             overflow: hidden;
+                        }
+                        & .unreadIndicator {
+                            width: 10px;
+                            height: 10px;
+                            border-radius: 50%;
+                            background-color: rgb(7, 141, 252);
+                            position: absolute;
+                            right: 10px;
+                            top: 55%;
                         }
                     }
                 }
@@ -290,13 +300,15 @@
                         font-size: 14.5px;
                         line-height: 1.5;
                         word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        word-break: break-all;
                         display: flex;
                         align-items: center;
                         justify-content: flex-start;
                         flex-direction: column;
                         position: relative;
                         color: white;
-                        white-space: pre-line;
+                        white-space: pre-line; /*Convert all newlines into a <br />*/
                         & small {
                             display: flex;
                             align-items: center;

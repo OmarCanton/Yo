@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { Routes, Route, useLocation } from "react-router-dom"
 import Home from './Pages/Home'
 import SignUp from "./Pages/SignUp"
@@ -19,8 +19,6 @@ import {
     profilePicture
 } from './Redux/Slice/getProfilePicture'
 import { useDispatch, useSelector } from 'react-redux'
-import { SocketContext } from "./Contexts/SocketContext"
-import { io } from 'socket.io-client'
 
 export default function App() {
     const [userId, setUserId] = useState('')
@@ -29,13 +27,20 @@ export default function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(() => {
         return localStorage.getItem('isLoggedIn') || false
     })
+    const [lastSelectedChat, setLastSelectedChat] = useState(() => {
+        return localStorage.getItem('lastSelectedChat') || ''
+    })
+    const [lastChatedPartner, setLastChatedPartner] = useState(() => {
+        return localStorage.getItem('lastChatedPartner') || ''
+    })
     const location = useLocation()
     const profilePhoto = useSelector(profilePicture)
     const loadingProfilePhoto = useSelector(loading)
+    const [content, setContent] = useState('')
     const dispatch = useDispatch()
     const id = localStorage.getItem('user_id')
-    const socket = useRef()
-    const [activeUsers, setActiveUsers] = useState([])
+
+    console.log('lastChatedPartner:: ', lastChatedPartner)
 
     useEffect(() => {
         dispatch(fetchPicture(id))
@@ -62,28 +67,8 @@ export default function App() {
         checkAuth()
     }, [])
     
-    
-    useEffect(() => {
-        if(userId) {
-            //Establishing a socket Io connection to the backend socket Io
-            socket.current = io(import.meta.env.VITE_BACKEND_URL, {
-                withCredentials: true,
-                query: { userId }
-            })
-            socket.current.on('connect', () => {
-                console.log(`User ${userId} connected to the socket with ${socket.current.id}`)
-            })
-            socket.current.on('getActiveUsers', (activeUsers) => {
-                setActiveUsers(activeUsers)
-            })
-            return () => {
-                socket.current.disconnect()
-            }
-        }
-    }, [userId])
-
     return (
-        <SocketContext.Provider value={{activeUsers}}>
+        <>
             <Toaster   
                 position='bottom-right'
                 toastOptions={{ duration: 3000 }} 
@@ -94,6 +79,9 @@ export default function App() {
                 photoChanged, setPhotoChanged,
                 isLoggedIn, setIsLoggedIn,
                 username, setUsername,
+                content, setContent,
+                lastSelectedChat, setLastSelectedChat, 
+                lastChatedPartner, setLastChatedPartner
             }}>
                 <AnimatePresence mode='wait'>
                     <Routes location={location} key={location.pathname}>
@@ -112,6 +100,6 @@ export default function App() {
                     </Routes>
                 </AnimatePresence>
             </UserDetailsContext.Provider>
-        </SocketContext.Provider>
+        </>
     )
 }

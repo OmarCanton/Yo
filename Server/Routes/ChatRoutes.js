@@ -21,6 +21,7 @@ router.post('/startChat', async (req, res) => {
             chat = new Chats({
                 members: [userId, recipientId],
                 messages: [], //set to an empty array at the start of a chat
+                unreadMessages: [],
                 userDetails: {
                     id: user._id,
                     username: user.username,
@@ -41,26 +42,28 @@ router.post('/startChat', async (req, res) => {
     }
 })
 
+
+//Handled with socket io
 //Fetch all chats for a user
-router.get('/fetchChats/:userId', async (req, res) => {
-    const { userId } = req.params
-    try {
-        const user = await Users.findById(userId)
-        if(!user) return res.json({success: false, error: 'User not found'})
+// router.get('/fetchChats/:userId', async (req, res) => {
+//     const { userId } = req.params
+//     try {
+//         const user = await Users.findById(userId)
+//         if(!user) return res.json({success: false, error: 'User not found'})
 
-        const chats = await Chats.find({members: userId}).sort({updatedAt: -1})
-        const userChats = chats.map(
-            chat => chat.userDetails.id === userId ? 
-            { chatId: chat._id, theChat: chat.otherUsersDetails, chatLastMessage: chat.lastMessage } 
-            :
-            { chatId: chat._id, theChat: chat.userDetails, chatLastMessage: chat.lastMessage}
-        )
+//         const chats = await Chats.find({members: userId}).sort({updatedAt: -1})
+//         const userChats = chats.map(
+//             chat => chat.userDetails.id === userId ? 
+//             { chatId: chat._id, theChat: chat.otherUsersDetails, chatLastMessage: chat.lastMessage } 
+//             :
+//             { chatId: chat._id, theChat: chat.userDetails, chatLastMessage: chat.lastMessage}
+//         )
 
-        res.json({success: true, chats: userChats})
-    } catch(err) {
-        res.json({success: false, error: err})
-    }
-})
+//         res.json({success: true, chats: userChats})
+//     } catch(err) {
+//         res.json({success: false, error: err})
+//     }
+// })
 
 //Fetch Messages in a particular chat
 router.get('/fetchMessages/:chatId', async (req, res) => {
@@ -76,33 +79,46 @@ router.get('/fetchMessages/:chatId', async (req, res) => {
         res.json({success: false, error: err})
     }
 })
+// router.get('/fetchUnreadCount/:chatId/:userId', async (req, res) => {
+//     const { chatId, userId } = req.params
+//     try {
+//         const findChat = await Chats.findById(chatId)
+//         if(findChat) {
+//             const unreadCnt = findChat.unreadMsgsTrack.filter(msg => msg.receiverId === userId)
+//             res.json({success: true, unreadCnt})
+//         }
+//     } catch (err) {
+//         console.log(err)
+//         res.json({success: false, error: err})
+//     }
+// })
 
 //Send a new Message
-router.post('/sendMessage/:chatId', async (req, res) => {
-    const { chatId } = req.params
-    const { senderId, content } = req.body
+// router.post('/sendMessage/:chatId', async (req, res) => {
+//     const { chatId } = req.params
+//     const { senderId, content } = req.body
 
-    try {
-        if(!senderId) return res.json({success: false, error: 'Message cannot be sent at this time'})
-        if(!chatId) return res.json({success: false, error: 'Cannot fetch messages, try again!'})
+//     try {
+//         if(!senderId) return res.json({success: false, error: 'Message cannot be sent at this time'})
+//         if(!chatId) return res.json({success: false, error: 'Cannot fetch messages, try again!'})
 
-        const chat = await Chats.findById(chatId)
+//         const chat = await Chats.findById(chatId)
 
-        //adding new message to the chat object
-        chat.messages.push({
-            senderId,
-            content
-        })
-        chat.lastMessage = content //whatever sent at the moment will be the last message sent at that moment
+//         //adding new message to the chat object
+//         chat.messages.push({
+//             senderId,
+//             content
+//         })
+//         chat.lastMessage = content //whatever sent at the moment will be the last message sent at that moment
 
-        await chat.save()
-        //The only thing to return is the last message since it will be the only thing to deal with at the frontend when the message is sent not the entire message object
-        //The entire message is fetched once the user opens the chat
-        res.json({success: true, messageSent: chat.messages[chat.messages.length - 1]}) //returns the last message in the message aray
-    } catch (err) {
-        res.json({success: false, error: err})
-    }
-})
+//         await chat.save()
+//         //The only thing to return is the last message since it will be the only thing to deal with at the frontend when the message is sent not the entire message object
+//         //The entire message is fetched once the user opens the chat
+//         res.json({success: true, messageSent: chat.messages[chat.messages.length - 1]}) //returns the last message in the message aray
+//     } catch (err) {
+//         res.json({success: false, error: err})
+//     }
+// })
 
 //fetch user details when requested
 router.get('/getProfile/:userId', async (req, res) => {

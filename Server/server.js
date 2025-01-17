@@ -11,7 +11,11 @@ const UserAuthRoutes = require('./Routes/UserAuthRoutes')
 const FriendRequestsRoutes = require('./Routes/FriendRequestsRoutes')
 const ChatRoutes = require('./Routes/ChatRoutes')
 const socketSetup = require('./Socket/SocketIo.js')
+const http = require('http')
+
 const app = express();
+
+const server = http.createServer(app)
 
 app.use(cors({
     origin: process.env.FRONT_END_URL,
@@ -50,7 +54,7 @@ app.use(ChatRoutes)
 
 
 const PORT = process.env.PORT
-const server = app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server running on Port ${PORT}`)
 })
 

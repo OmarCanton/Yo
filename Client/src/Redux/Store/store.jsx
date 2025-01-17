@@ -3,8 +3,11 @@ import getProfilePictureReducer from '../Slice/getProfilePicture'
 import fetchFriendsReducer from '../Slice/fetchFriends'
 import peopleReducer from '../Slice/fetchPeople'
 import friendReqsReducer from '../Slice/fetchFriendRequests'
-import chatsReducer from '../Slice/fetchChats'
-import fetchMessagesReducer from '../Slice/fetchMessages'
+// import chatsReducer from '../Slice/fetchChats'
+// import fetchMessagesReducer from '../Slice/fetchMessages'
+// import sendMessageReducer from '../Slice/sendMessage'
+import socketReducer from '../Slice/SocketSlice'
+import fetchChatsReducer from '../Slice/fetchUserChats'
 
 const store = configureStore({
     reducer: {
@@ -12,8 +15,10 @@ const store = configureStore({
         people: peopleReducer,
         friends: fetchFriendsReducer,
         friendRequests: friendReqsReducer,
-        chat: chatsReducer,
-        message: fetchMessagesReducer
+        chats: fetchChatsReducer,
+        // message: fetchMessagesReducer,
+        // sendMsg: sendMessageReducer,
+        socket: socketReducer
     }
 })
 
