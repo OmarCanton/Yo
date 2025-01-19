@@ -38,20 +38,17 @@ const socketSetup = (server) => {
                 content
             })
             chat.lastMessage = content
-          
-            //I'm here too increment the count when user sends message
 
-
-            // const existingUnreadMsg = chat.unreadMsgsTrack.find(user => user.senderId === senderId && user.receiverId === receiverId )
-            // if(existingUnreadMsg) {
-            //     existingUnreadMsg.count += 1
-            // } else {
-            //     chat.unreadMsgsTrack.push({
-            //         senderId,
-            //         receiverId,
-            //         count: 1
-            //     })
-            // }
+            const existingUnreadMsg = chat.unreadMsgsTrack.find(user => user.senderId === senderId && user.receiverId === receiverId )
+            if(existingUnreadMsg) {
+                existingUnreadMsg.count += 1
+            } else {
+                chat.unreadMsgsTrack.push({
+                    senderId,
+                    receiverId,
+                    count: 1
+                })
+            }
     
             await chat.save()
 
@@ -75,30 +72,35 @@ const socketSetup = (server) => {
 
         //Fetching user chats live
         socket.on('fetchChats', async (userId) => {
-            // const fetchUnreadCounts = async (chatId, userId) => {
-            //     const findChat = await Chat.findById(chatId)
-            //     if(findChat) {
-            //         const unreadCnt = findChat.unreadMsgsTrack.filter(msg => msg.receiverId === userId)
-            //         return unreadCnt
-            //     }
-            // }
             if(userId) {
                 const user = await Users.findById(userId)
                 if(!user) return console.log('User not found')
         
                 const chats = await Chat.find({members: userId}).sort({updatedAt: -1})
                 const userChats = chats.map((chat) => chat.userDetails.id === userId ? 
-                    { chatId: chat._id, theChat: chat.otherUsersDetails, chatLastMessage: chat.lastMessage} 
+                    { chatId: chat._id, theChat: chat.otherUsersDetails, chatLastMessage: chat.lastMessage, unreadCounts: chat.unreadMsgsTrack} 
                     :
-                    { chatId: chat._id, theChat: chat.userDetails, chatLastMessage: chat.lastMessage}
+                    { chatId: chat._id, theChat: chat.userDetails, chatLastMessage: chat.lastMessage, unreadCounts: chat.unreadMsgsTrack}
                 )
                 socket.emit('getChats', userChats)
             }
         })
 
-        socket.on('openChat', () => {
-            //I'm here, clearing thje unread tag when user opens chat!
+        socket.on('openChat', async ({chatId, selectedUser}) => {
+            if(chatId && selectedUser) {
+                const chats = await Chat.findById(chatId)
+                console.log(chats)
+                if(chats) {
+                    const chat = chats.unreadMsgsTrack.filter(chat => chat.senderId === selectedUser && chat.receiverId === userId) 
+                    if(chat) {
+                        chat.count = 0
+                    }
+                    chats.save()
+                }
+                
+            }
         })
+        // socket.emit('fetchUnreadCounts', ())
 
         socket.on('disconnect', () => {
             activeUsers = activeUsers.filter(user => user.socketId !== socket.id)

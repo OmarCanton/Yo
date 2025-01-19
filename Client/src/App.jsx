@@ -40,8 +40,6 @@ export default function App() {
     const dispatch = useDispatch()
     const id = localStorage.getItem('user_id')
 
-    console.log('lastChatedPartner:: ', lastChatedPartner)
-
     useEffect(() => {
         dispatch(fetchPicture(id))
     }, [dispatch, id, photoChanged])

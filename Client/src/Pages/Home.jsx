@@ -60,7 +60,7 @@ export default function Home() {
     const [fetchingMsgs, setFetchingMsgs] = useState(false)
     const [messages, setMessages] = useState({})
     const [lastMsg, setLastMsg] = useState('')
-
+    const [openChat, setOpenChat] = useState(false)
 
     //Utility function to formate the messages
     const groupMessagesByDate = (messages) => {
@@ -86,6 +86,20 @@ export default function Home() {
         })
         return grouped
     }
+
+    useEffect(() => {
+        if(userId) {
+            const socketConnection = io(import.meta.env.VITE_BACKEND_URL, {
+                withCredentials: true,
+                query: { userId }
+            })
+            dispatch(setSocketConnection(socketConnection))
+            socketConnection.emit('fetchChats', userId)
+            socketConnection.on('getChats', (chats) => {
+                dispatch(fetchChats(chats))
+            })
+        }
+    }, [dispatch, userId])
     
     useEffect(() => {
         const fetchMessages = async (lastSelectedChat) => {
@@ -145,24 +159,20 @@ export default function Home() {
                 }
             }
         }
+
+
+        //****** I'M HERE, I USED SOCKET iO TO FETCH TO FETCH THE NUMBER OF UNREAD MESSAGES*/
+        //** NOW I WANT TO USE SOCKET */
+
+        if(socket) {
+            socket.emit('openChat', ({
+                chatId: lastSelectedChat, 
+                selectedUser: lastChatedPartner
+            }))
+        }
         fetchChatPartnerProfile(lastChatedPartner)
         fetchMessages(lastSelectedChat)
-    }, [lastChatedPartner, lastSelectedChat, setLastChatedPartner, setLastSelectedChat])
-    
-
-    useEffect(() => {
-        if(userId) {
-            const socketConnection = io(import.meta.env.VITE_BACKEND_URL, {
-                withCredentials: true,
-                query: { userId }
-            })
-            dispatch(setSocketConnection(socketConnection))
-            socketConnection.emit('fetchChats', userId)
-            socketConnection.on('getChats', (chats) => {
-                dispatch(fetchChats(chats))
-            })
-        }
-    }, [dispatch, userId, content])
+    }, [lastChatedPartner, lastSelectedChat, setLastChatedPartner, setLastSelectedChat, socket])
 
     useEffect(() => {
         if(socket) {
@@ -270,6 +280,7 @@ export default function Home() {
         const theKeyword = keyword.trim()
         if(theKeyword === '' && socket) {
             socket.emit('fetchChats', userId)
+            console.log(chats)
             socket.on('getChats', (chats) => {
                 dispatch(fetchChats(chats))
             })
@@ -277,21 +288,7 @@ export default function Home() {
         } else {
             dispatch(fetchSearchChats({userId, theKeyword}))
         }
-    }, [dispatch, userId, keyword, socket])
-
-
-    // const fetchUnreadCount = async (chatId, userId) =>  {    
-    //     try {
-    //         const response = await  axios.get(`${import.meta.env.VITE_BACKEND_URL}/fetchUnreadCount/${chatId}/${userId}`)
-    //         console.log(response.data)
-    //     } catch (err) {
-    //         console.log(err)
-    //     }
-    // }
-
-    // useEffect(() => {
-    //     fetchUnreadCount()
-    // }, [])
+    }, [dispatch, userId, keyword, socket, chats])
 
     return (
         <div className="home-wrapper">
@@ -316,7 +313,7 @@ export default function Home() {
                     </div>
                     <div className="logout" title='logout' onClick={handleLogout}>
                         {loggingOut ? 
-                            <CircularProgress style={{width: 25, height: 25}} />
+                            <CircularProgress style={{width: 25, height: 25, color: 'red'}} />
                             :
                             <LogoutRounded className='logoutIcon' htmlColor='red'/>
                         }
@@ -377,8 +374,11 @@ export default function Home() {
                                         </p>
                                         <small className='lastMessage'>
                                             {(lastMsg && lastMsg.chatId === chat.chatId) ? lastMsg.lastMessage : chat.chatLastMessage}
-                                            {/* {chat.} */}
                                         </small>
+                                        {chat.unreadCounts && chat.unreadCounts.map(unread => (unread.receiverId === userId && unread.senderId === chat.theChat.id) 
+                                            && 
+                                            <div className='unreadCounts' key={unread.id}>{unread.count}</div>)
+                                        }
                                     </div>
                                 </motion.div>
                             )
@@ -390,61 +390,65 @@ export default function Home() {
                 <div className="chatArea">
                     {lastSelectedChat ?
                         <>
-                            <div className="chatHead">
-                                <div className="chatPartner">
-                                    <div className='profileName'>
-                                        <div className="image">
-                                            {partnerProfile.profileImage ?
-                                                <img src={partnerProfile.profileImage} alt={partnerProfile.username} />
-                                                : 
-                                                <AccountCircle htmlColor='grey' style={{width: '100%', height: '100%'}} />
-                                            }
-                                        </div>
-                                        <div className="partner-username">
-                                            <p>{partnerProfile.username}</p>
-                                            <small>{activeUsers.some(user => user.userId == partnerProfile._id) ? 'Online' : 'Offline'}</small>
+                            {!fetchingMsgs ?
+                                <>
+                                    <div className="chatHead">
+                                        <div className="chatPartner">
+                                            <div className='profileName'>
+                                                <div className="image">
+                                                    {partnerProfile.profileImage ?
+                                                        <img src={partnerProfile.profileImage} alt={partnerProfile.username} />
+                                                        : 
+                                                        <AccountCircle htmlColor='grey' style={{width: '100%', height: '100%'}} />
+                                                    }
+                                                </div>
+                                                <div className="partner-username">
+                                                    <p>{partnerProfile.username}</p>
+                                                    <small>{activeUsers.some(user => user.userId == partnerProfile._id) ? 'Online' : 'Offline'}</small>
+                                                </div>
+                                            </div>
+                                            <div className="otherOps"><MoreHoriz /></div>
                                         </div>
                                     </div>
-                                    <div className="otherOps"><MoreHoriz /></div>
-                                </div>
-                            </div>
-                            <div ref={messageAreaRef} className="messageArea">
-                                {Object.keys(messages).length <= 0 && 
-                                    <p className='noChat'>No chat history available</p>
-                                }
-                                {fetchingMsgs && <CircularProgress />}
-                                {(Object.keys(messages).length > 0) && Object.keys(messages).map(date => (
-                                    <div className='groupedMessagesByDate' key={date}>
-                                        <div className='date'>
-                                            <small>{date}</small>
-                                        </div>
-                                        {messages[date].map(message => {
-                                            return(
-                                                <motion.div 
-                                                    initial={{y: '10%', opacity: 0}}
-                                                    animate={{y: 0, opacity: 1}}
-                                                    exit={{y: '10%', opacity: 0}}
-                                                    key={message._id}
-                                                    style={{
-                                                        alignSelf: message.senderId === userId ? 'flex-end' : 'flex-start', 
-                                                        backgroundColor: message.senderId === userId ? 'rgb(7, 141, 252)' : 'rgb(141, 141, 141)',
-                                                    }}
-                                                    className="msg"
-                                                >
-                                                    {message.content}
-                                                    <small style={{
-                                                        alignSelf: message.senderId === userId ? 'flex-end' : 'flex-start',
-                                                    }}>
-                                                        {timeStamps(message.createdAt)}
-                                                        {message.status === 'sent' && message.senderId === userId && <DoneRounded fontSize='small'/>}
-                                                    </small>
-                                                </motion.div>
-                                            )
-                                        })}
+                                    <div ref={messageAreaRef} className="messageArea">
+                                        {Object.keys(messages).length <= 0 && 
+                                            <p className='noChat'>No chat history available</p>
+                                        }
+                                        {(Object.keys(messages).length > 0) && Object.keys(messages).map(date => (
+                                            <div className='groupedMessagesByDate' key={date}>
+                                                <div className='date'>
+                                                    <small>{date}</small>
+                                                </div>
+                                                {messages[date].map(message => {
+                                                    return(
+                                                        <motion.div 
+                                                            initial={{y: '10%', opacity: 0}}
+                                                            animate={{y: 0, opacity: 1}}
+                                                            exit={{y: '10%', opacity: 0}}
+                                                            key={message._id}
+                                                            style={{
+                                                                alignSelf: message.senderId === userId ? 'flex-end' : 'flex-start', 
+                                                                backgroundColor: message.senderId === userId ? 'rgb(7, 141, 252)' : 'rgb(141, 141, 141)',
+                                                            }}
+                                                            className="msg"
+                                                        >
+                                                            {message.content}
+                                                            <small style={{
+                                                                alignSelf: message.senderId === userId ? 'flex-end' : 'flex-start',
+                                                            }}>
+                                                                {timeStamps(message.createdAt)}
+                                                                {message.status === 'sent' && message.senderId === userId && <DoneRounded fontSize='small'/>}
+                                                            </small>
+                                                        </motion.div>
+                                                    )
+                                                })}
+                                            </div>
+                                        ))} 
                                     </div>
-                                ))} 
-                                {/* {messageStatus === 'failed' && <div className='noChat'>Error loading messages</div>} */}
-                            </div>
+                                </>
+                                :
+                                <div className='loadingMessages'><CircularProgress /></div>
+                            }
                             <div className="inputs">
                                 <div className="textInput">
                                     <div className="left">

@@ -120,6 +120,27 @@ router.get('/fetchMessages/:chatId', async (req, res) => {
 //     }
 // })
 
+//openChat
+router.post('/openChatDeleteCount', async (req, res) => {
+    const { chatId, userId, selectedUser } = req.body
+    try {
+        if(chatId && selectedUser) {
+            const chats = await Chats.findById(chatId)
+            
+            if(chats) {
+                const chat = chats.unreadMsgsTrack.find(chat => chat.senderId === selectedUser && chat.receiverId === userId) 
+                if(chat) {
+                    chat.count = 0
+                }
+                chats.save()
+                res.json(chat)
+            }
+        }
+    } catch (err) {
+        console.log(err)
+    }
+})
+
 //fetch user details when requested
 router.get('/getProfile/:userId', async (req, res) => {
     const { userId } = req.params
