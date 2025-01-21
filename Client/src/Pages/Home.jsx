@@ -60,7 +60,6 @@ export default function Home() {
     const [fetchingMsgs, setFetchingMsgs] = useState(false)
     const [messages, setMessages] = useState({})
     const [lastMsg, setLastMsg] = useState('')
-    const [openChat, setOpenChat] = useState(false)
 
     //Utility function to formate the messages
     const groupMessagesByDate = (messages) => {
@@ -160,19 +159,24 @@ export default function Home() {
             }
         }
 
-
-        //****** I'M HERE, I USED SOCKET iO TO FETCH TO FETCH THE NUMBER OF UNREAD MESSAGES*/
-        //** NOW I WANT TO USE SOCKET */
-
+        //I'm here, user shouldnt emit the get message count if its already selected
         if(socket) {
             socket.emit('openChat', ({
-                chatId: lastSelectedChat, 
+                chatId: lastSelectedChat,
+                userId,
                 selectedUser: lastChatedPartner
             }))
         }
         fetchChatPartnerProfile(lastChatedPartner)
         fetchMessages(lastSelectedChat)
-    }, [lastChatedPartner, lastSelectedChat, setLastChatedPartner, setLastSelectedChat, socket])
+    }, [
+        lastChatedPartner, 
+        lastSelectedChat, 
+        setLastChatedPartner, 
+        setLastSelectedChat,
+        userId, 
+        socket
+    ])
 
     useEffect(() => {
         if(socket) {
@@ -375,7 +379,7 @@ export default function Home() {
                                         <small className='lastMessage'>
                                             {(lastMsg && lastMsg.chatId === chat.chatId) ? lastMsg.lastMessage : chat.chatLastMessage}
                                         </small>
-                                        {chat.unreadCounts && chat.unreadCounts.map(unread => (unread.receiverId === userId && unread.senderId === chat.theChat.id) 
+                                        {lastSelectedChat !== chat.chatId && chat.unreadCounts && chat.unreadCounts.map(unread => (unread.receiverId === userId && unread.senderId === chat.theChat.id && unread.count !== 0) 
                                             && 
                                             <div className='unreadCounts' key={unread.id}>{unread.count}</div>)
                                         }

@@ -83,24 +83,24 @@ const socketSetup = (server) => {
                     { chatId: chat._id, theChat: chat.userDetails, chatLastMessage: chat.lastMessage, unreadCounts: chat.unreadMsgsTrack}
                 )
                 socket.emit('getChats', userChats)
+                // socket.emit('getCounts', userChats.unreadCounts)
             }
         })
 
-        socket.on('openChat', async ({chatId, selectedUser}) => {
-            if(chatId && selectedUser) {
+        socket.on('openChat', async ({chatId, userId, selectedUser}) => {
+            if(chatId && selectedUser && userId) {
                 const chats = await Chat.findById(chatId)
-                console.log(chats)
                 if(chats) {
-                    const chat = chats.unreadMsgsTrack.filter(chat => chat.senderId === selectedUser && chat.receiverId === userId) 
+                    const chat = chats.unreadMsgsTrack.find(chat => chat.senderId === selectedUser && chat.receiverId === userId) 
                     if(chat) {
                         chat.count = 0
                     }
+                    //delete the object afterwards
+                    chats.unreadMsgsTrack = chats.unreadMsgsTrack.filter(chat => !(chat.senderId === selectedUser && chat.receiverId === userId))
                     chats.save()
                 }
-                
             }
         })
-        // socket.emit('fetchUnreadCounts', ())
 
         socket.on('disconnect', () => {
             activeUsers = activeUsers.filter(user => user.socketId !== socket.id)
