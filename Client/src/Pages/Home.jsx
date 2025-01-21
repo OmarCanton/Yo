@@ -160,6 +160,7 @@ export default function Home() {
         }
 
         //I'm here, user shouldnt emit the get message count if its already selected
+        //User Shuld automatically emit this when already selected
         if(socket) {
             socket.emit('openChat', ({
                 chatId: lastSelectedChat,
